@@ -1,7 +1,7 @@
 import { useAuth } from '@/features/auth/hooks/useAuth'
 
 export default function SettingsPage() {
-  const { profile } = useAuth()
+  const { profile} = useAuth()
 
   return (
     <div className="space-y-6">

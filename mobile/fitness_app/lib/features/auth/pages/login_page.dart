@@ -1,11 +1,15 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared/providers/auth_provider.dart';
-import '../../../app/design_tokens.dart';
-import '../../shared/widgets/clay/clay_card.dart';
-import '../../shared/widgets/clay/clay_button.dart';
-import '../../shared/widgets/clay/clay_input.dart';
+import 'package:shared/services/auth_service.dart';
+import '../../../app/cupertino_theme.dart';
+import '../../shared/widgets/animations.dart';
+
+/// Small helper: forces off any inherited text decoration (e.g. underline)
+/// so labels always render clean regardless of ambient theme defaults.
+TextStyle _clean(TextStyle style) => style.copyWith(decoration: TextDecoration.none);
 
 class LoginPage extends ConsumerStatefulWidget {
   const LoginPage({super.key});
@@ -16,95 +20,79 @@ class LoginPage extends ConsumerStatefulWidget {
 
 class _LoginPageState extends ConsumerState<LoginPage>
     with TickerProviderStateMixin {
-  final _codeController = TextEditingController();
+  final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _emailFocus = FocusNode();
   final _passwordFocus = FocusNode();
   String _selectedRole = 'member';
   String? _error;
-  String? _prefixWarning;
   bool _loading = false;
   bool _obscurePassword = true;
-
-  late AnimationController _fadeCtrl;
-  late AnimationController _slideCtrl;
-  late AnimationController _errorCtrl;
-
+  late AnimationController _fadeController;
   late Animation<double> _fadeAnim;
-  late Animation<Offset> _slideAnim;
+
+  // Drives the background glow rising toward the top while either
+  // field is focused / being typed into.
+  late AnimationController _bgController;
+  late Animation<double> _bgAnim;
 
   @override
   void initState() {
     super.initState();
-
-    _fadeCtrl = AnimationController(
+    _fadeController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 700),
+      duration: const Duration(milliseconds: 300),
     );
-    _fadeAnim = CurvedAnimation(parent: _fadeCtrl, curve: Curves.easeIn);
-
-    _slideCtrl = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 700),
-    );
-    _slideAnim = Tween<Offset>(
-      begin: const Offset(0, 0.12),
-      end: Offset.zero,
-    ).animate(CurvedAnimation(parent: _slideCtrl, curve: Curves.easeOutCubic));
-
-    _errorCtrl = AnimationController(
-      vsync: this,
-      duration: ClayTokens.normal,
+    _fadeAnim = CurvedAnimation(
+      parent: _fadeController,
+      curve: Curves.easeInOut,
     );
 
-    _emailFocus.addListener(() => setState(() {}));
-    _passwordFocus.addListener(() => setState(() {}));
-    _codeController.addListener(() => setState(() { _prefixWarning = null; }));
-    _passwordController.addListener(() => setState(() {}));
+    _bgController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 450),
+    );
+    _bgAnim = CurvedAnimation(
+      parent: _bgController,
+      curve: Curves.easeOutCubic,
+    );
 
-    Future.delayed(const Duration(milliseconds: 100), () {
-      if (mounted) {
-        _fadeCtrl.forward();
-        _slideCtrl.forward();
-      }
-    });
+    _emailFocus.addListener(_handleFocusChange);
+    _passwordFocus.addListener(_handleFocusChange);
+  }
+
+  void _handleFocusChange() {
+    final isTyping = _emailFocus.hasFocus || _passwordFocus.hasFocus;
+    if (isTyping) {
+      _bgController.forward();
+    } else {
+      _bgController.reverse();
+    }
   }
 
   @override
   void dispose() {
-    _codeController.dispose();
+    _emailController.dispose();
     _passwordController.dispose();
     _emailFocus.dispose();
     _passwordFocus.dispose();
-    _fadeCtrl.dispose();
-    _slideCtrl.dispose();
-    _errorCtrl.dispose();
+    _fadeController.dispose();
+    _bgController.dispose();
     super.dispose();
   }
 
   Future<void> _login() async {
-    final code = _codeController.text.trim();
+    final email = _emailController.text.trim();
     final password = _passwordController.text;
 
-    if (code.isEmpty) {
-      setState(() => _error = 'Please enter your code');
-      _errorCtrl.forward(from: 0);
+    if (email.isEmpty) {
+      setState(() => _error = 'Please enter your email');
+      _fadeController.forward(from: 0);
       return;
     }
     if (password.isEmpty) {
       setState(() => _error = 'Please enter your password');
-      _errorCtrl.forward(from: 0);
-      return;
-    }
-
-    final prefix = code.isNotEmpty ? code[0] : '';
-    setState(() => _prefixWarning = null);
-    if (_selectedRole == 'trainer' && prefix == 'M') {
-      setState(() => _prefixWarning = 'This is a member account, trainer access only.');
-      return;
-    }
-    if (_selectedRole == 'member' && prefix == 'T') {
-      setState(() => _prefixWarning = 'This is a trainer account, member access only.');
+      _fadeController.forward(from: 0);
       return;
     }
 
@@ -114,322 +102,566 @@ class _LoginPageState extends ConsumerState<LoginPage>
     });
 
     try {
-      await ref.read(authProvider.notifier).signInWithCode(
-        _codeController.text.trim().toUpperCase(),
-        _passwordController.text,
+      final authService = AuthService();
+      final profile = await authService.signIn(
+        email: email,
+        password: password,
       );
 
-      if (!mounted) return;
-      final profile = ref.read(authProvider).valueOrNull;
-      if (profile == null) return;
-
-      if (profile.role != _selectedRole) {
-        setState(() {
-          _prefixWarning = profile.role == 'member'
-            ? 'This account is a member, not a trainer'
-            : 'This account is a trainer, not a member';
-          _loading = false;
-        });
+      if (profile == null) {
+        setState(() => _error = 'Invalid email or password');
+        _fadeController.forward(from: 0);
         return;
       }
 
+      if (profile.role != _selectedRole) {
+        await authService.signOut();
+        setState(() {
+          _error =
+              'This account is not registered as ${_selectedRole == 'member' ? 'a Member' : 'a Trainer'}';
+          _loading = false;
+        });
+        _fadeController.forward(from: 0);
+        return;
+      }
+
+      if (!mounted) return;
+      ref.read(authProvider.notifier).setProfile(profile);
       context.go(
         profile.role == 'trainer' ? '/trainer/dashboard' : '/member/home',
       );
     } catch (e) {
       setState(() => _error = e.toString());
-      _errorCtrl.forward(from: 0);
+      _fadeController.forward(from: 0);
     } finally {
       if (mounted) setState(() => _loading = false);
     }
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.black,
-      body: Container(
-        width: double.infinity,
-        height: double.infinity,
-        decoration: const BoxDecoration(
-          gradient: RadialGradient(
-            center: Alignment.center,
-            radius: 1.3,
-            colors: [Color(0xFF1A0A2E), Color(0xFF0D0D1A), Color(0xFF000000)],
-            stops: [0.0, 0.5, 1.0],
-          ),
+  /// Clean, custom-built role toggle (replaces CupertinoSlidingSegmentedControl,
+  /// which was rendering with mismatched/overlapping segments).
+  Widget _buildRoleToggle() {
+    return Container(
+      height: 46,
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: CupertinoAppColors.cardElevated,
+        borderRadius: BorderRadius.circular(13),
+        border: Border.all(
+          color: CupertinoAppColors.separator.withOpacity(0.4),
         ),
-        child: SafeArea(
-          child: FadeTransition(
-            opacity: _fadeAnim,
-            child: Center(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 28,
-                  vertical: 24,
-                ),
-                child: SlideTransition(
-                  position: _slideAnim,
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      _buildLogoSection(),
-                      const SizedBox(height: 36),
-                      _buildLoginCard(),
+      ),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final segmentWidth = (constraints.maxWidth - 8) / 2;
+          final selectedIndex = _selectedRole == 'member' ? 0 : 1;
+          return Stack(
+            children: [
+              AnimatedPositioned(
+                duration: const Duration(milliseconds: 220),
+                curve: Curves.easeOutCubic,
+                left: selectedIndex * (segmentWidth + 8),
+                top: 0,
+                bottom: 0,
+                width: segmentWidth,
+                child: Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(10),
+                    gradient: const LinearGradient(
+                      begin: Alignment.centerLeft,
+                      end: Alignment.centerRight,
+                      colors: [
+                        CupertinoAppColors.purple,
+                        CupertinoAppColors.primaryBlue,
+                      ],
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: CupertinoAppColors.primaryBlue.withOpacity(0.35),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
                     ],
                   ),
                 ),
               ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildLogoSection() {
-    return Container(
-      width: 120,
-      height: 120,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        boxShadow: [
-          BoxShadow(
-            color: ClayTokens.clayPrimary.withAlpha(60),
-            blurRadius: 24,
-            spreadRadius: 2,
-          ),
-        ],
-      ),
-      child: ClipOval(
-        child: Image.asset('assets/logo.png', width: 120, height: 120, fit: BoxFit.cover),
-      ),
-    );
-  }
-
-  Widget _buildLoginCard() {
-    return ClayCard(
-      variant: ClayCardVariant.elevated,
-      padding: ClayCardPadding.large,
-      borderRadius: BorderRadius.circular(ClayTokens.radiusCard),
-      customShadows: [
-        BoxShadow(
-          color: ClayTokens.clayPrimary.withAlpha(30),
-          blurRadius: 32,
-          spreadRadius: 2,
-          offset: const Offset(0, 8),
-        ),
-        BoxShadow(
-          color: Colors.black.withAlpha(100),
-          blurRadius: 20,
-          offset: const Offset(0, 4),
-        ),
-      ],
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            'FitTrack',
-            style: ClayTokens.headlineLarge.copyWith(
-              fontWeight: FontWeight.w800,
-              color: ClayTokens.clayDarkTextPrimary,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            'Your fitness journey starts here',
-            style: ClayTokens.bodySmall.copyWith(
-              color: ClayTokens.clayDarkTextTertiary,
-            ),
-          ),
-          const SizedBox(height: 24),
-          _buildRoleToggle(),
-          const SizedBox(height: 22),
-          ClayInput(
-            controller: _codeController,
-            focusNode: _emailFocus,
-            label: 'UID',
-            hint: '',
-            prefixIcon: const Icon(Icons.tag, size: 18),
-            keyboardType: TextInputType.text,
-            textInputAction: TextInputAction.next,
-            textCapitalization: TextCapitalization.characters,
-            onSubmitted: (_) => _passwordFocus.requestFocus(),
-          ),
-          const SizedBox(height: 14),
-          ClayInput(
-            controller: _passwordController,
-            focusNode: _passwordFocus,
-            label: 'Password',
-            hint: '',
-            obscureText: _obscurePassword,
-            prefixIcon: const Icon(Icons.lock_outlined, size: 18),
-            suffixIcon: Icon(
-              _obscurePassword ? Icons.visibility_off : Icons.visibility,
-              size: 18,
-              color: ClayTokens.clayDarkTextTertiary,
-            ),
-            onSuffixTap: () => setState(() => _obscurePassword = !_obscurePassword),
-            textInputAction: TextInputAction.done,
-            onSubmitted: (_) => _login(),
-          ),
-          if (_error != null) ...[
-            const SizedBox(height: 12),
-            FadeTransition(
-              opacity: _errorCtrl,
-              child: Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: ClayTokens.clayError.withAlpha(20),
-                  borderRadius: BorderRadius.circular(ClayTokens.radiusXs),
-                  border: Border.all(
-                    color: ClayTokens.clayError.withAlpha(77),
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    Icon(Icons.error_outline, color: ClayTokens.clayError, size: 16),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        _error!,
-                        style: ClayTokens.bodySmall.copyWith(color: ClayTokens.clayError),
-                      ),
-                    ),
-                    GestureDetector(
-                      onTap: () => setState(() => _error = null),
-                      child: Icon(Icons.close, color: ClayTokens.clayError, size: 16),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
-          if (_prefixWarning != null) ...[
-            const SizedBox(height: 16),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-              decoration: BoxDecoration(
-                color: ClayTokens.clayWarning.withAlpha(26),
-                borderRadius: BorderRadius.circular(ClayTokens.radiusXs),
-                border: Border.all(color: ClayTokens.clayWarning.withAlpha(77)),
-              ),
-              child: Row(
+              Row(
                 children: [
-                  Icon(Icons.info_outline, color: ClayTokens.clayWarning, size: 16),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      _prefixWarning!,
-                      style: ClayTokens.labelMedium.copyWith(color: ClayTokens.clayWarning),
-                    ),
-                  ),
-                  GestureDetector(
-                    onTap: () => setState(() => _prefixWarning = null),
-                    child: Icon(Icons.close, color: ClayTokens.clayWarning, size: 16),
-                  ),
+                  Expanded(child: _roleTab('member', 'Member')),
+                  Expanded(child: _roleTab('trainer', 'Trainer')),
                 ],
               ),
-            ),
-          ],
-          const SizedBox(height: 16),
-          ClayButton(
-            label: 'Sign In',
-            onPressed: _login,
-            loading: _loading,
-            fullWidth: true,
-            size: ClayButtonSize.large,
-          ),
-          const SizedBox(height: 16),
-          Text(
-            'v1.0.0 \u00b7 Powered by FitTrack',
-            style: ClayTokens.bodyMedium.copyWith(
-              fontSize: 11,
-              color: ClayTokens.clayDarkTextTertiary,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildRoleToggle() {
-    return Container(
-      width: double.infinity,
-      height: 50,
-      decoration: BoxDecoration(
-        color: ClayTokens.clayDarkCard,
-        borderRadius: BorderRadius.circular(ClayTokens.radiusSm),
-        border: Border.all(color: ClayTokens.clayDarkBorder.withAlpha(102)),
-      ),
-      child: Row(
-        children: [
-          _roleTab(
-            label: 'MEMBER',
-            icon: Icons.person,
-            isSelected: _selectedRole == 'member',
-            onTap: () => setState(() { _selectedRole = 'member'; _prefixWarning = null; }),
-          ),
-          _roleTab(
-            label: 'TRAINER',
-            icon: Icons.person,
-            isSelected: _selectedRole == 'trainer',
-            onTap: () => setState(() { _selectedRole = 'trainer'; _prefixWarning = null; }),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _roleTab({
-    required String label,
-    required IconData icon,
-    required bool isSelected,
-    required VoidCallback onTap,
-  }) {
-    return Expanded(
-      child: GestureDetector(
-        onTap: _loading ? null : onTap,
-        child: AnimatedContainer(
-          duration: ClayTokens.normal,
-          curve: Curves.easeInOut,
-          margin: const EdgeInsets.all(4),
-          decoration: BoxDecoration(
-            gradient: isSelected
-                ? LinearGradient(colors: [ClayTokens.clayPrimary, ClayTokens.clayPrimary])
-                : null,
-            color: isSelected ? null : Colors.transparent,
-            borderRadius: BorderRadius.circular(ClayTokens.radiusXs),
-            boxShadow: isSelected
-                ? [
-                    BoxShadow(
-                      color: ClayTokens.clayPrimary.withAlpha(60),
-                      blurRadius: 6,
-                      offset: const Offset(0, 2),
-                    ),
-                  ]
-                : null,
-          ),
-          padding: const EdgeInsets.symmetric(vertical: 8),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(icon, size: 16, color: isSelected ? ClayTokens.clayDarkTextPrimary : ClayTokens.clayDarkTextTertiary),
-              const SizedBox(width: 6),
-              Text(
-                label,
-                style: ClayTokens.bodyMedium.copyWith(
-                  fontSize: 11,
-                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w400,
-                  color: isSelected ? ClayTokens.clayDarkTextPrimary : ClayTokens.clayDarkTextTertiary,
-                  letterSpacing: 0.5,
-                ),
-              ),
             ],
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _roleTab(String value, String label) {
+    final selected = _selectedRole == value;
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: () {
+        if (_selectedRole != value) setState(() => _selectedRole = value);
+      },
+      child: SizedBox.expand(
+        child: Center(
+          child: Text(
+            label,
+            style: _clean(sfText(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: selected
+                  ? CupertinoAppColors.textPrimary
+                  : CupertinoAppColors.textTertiary,
+            )),
           ),
         ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return DefaultTextStyle(
+      // Safety net: guarantees nothing in this subtree ever inherits an
+      // underline from an ambient theme default.
+      style: const TextStyle(decoration: TextDecoration.none),
+      child: CupertinoPageScaffold(
+        backgroundColor: CupertinoAppColors.background,
+        child: AnimatedBuilder(
+          animation: _bgAnim,
+          builder: (context, child) {
+            final shift = _bgAnim.value * 60;
+            return Stack(
+              children: [
+                // Decorative ambient glow — rises toward the top while typing.
+                Positioned(
+                  top: -90 - shift,
+                  left: -70,
+                  child: IgnorePointer(
+                    child: _GlowBlob(
+                      size: 240,
+                      colors: [
+                        CupertinoAppColors.purple.withOpacity(0.26),
+                        CupertinoAppColors.purple.withOpacity(0.0),
+                      ],
+                    ),
+                  ),
+                ),
+                Positioned(
+                  bottom: -110 + shift,
+                  right: -80,
+                  child: IgnorePointer(
+                    child: _GlowBlob(
+                      size: 260,
+                      colors: [
+                        CupertinoAppColors.primaryBlue.withOpacity(0.22),
+                        CupertinoAppColors.primaryBlue.withOpacity(0.0),
+                      ],
+                    ),
+                  ),
+                ),
+                child!,
+              ],
+            );
+          },
+          child: SafeArea(
+            child: LayoutBuilder(
+              builder: (context, constraints) => SingleChildScrollView(
+                physics: const ClampingScrollPhysics(),
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const SizedBox(height: 48),
+                        Stack(
+                          clipBehavior: Clip.none,
+                          alignment: Alignment.topCenter,
+                          children: [
+                            // Card
+                            Container(
+                              margin: const EdgeInsets.only(top: 42),
+                              padding: const EdgeInsets.fromLTRB(24, 54, 24, 24),
+                              decoration: BoxDecoration(
+                                color: CupertinoAppColors.groupedBackground,
+                                borderRadius: BorderRadius.circular(22),
+                                border: Border.all(
+                                  color:
+                                      CupertinoAppColors.separator.withOpacity(0.5),
+                                ),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: CupertinoAppColors.purple
+                                        .withOpacity(0.12),
+                                    blurRadius: 44,
+                                    offset: const Offset(0, 22),
+                                  ),
+                                ],
+                              ),
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  StaggeredFadeIn(
+                                    index: 1,
+                                    child: ShaderMask(
+                                      blendMode: BlendMode.srcIn,
+                                      shaderCallback: (bounds) =>
+                                          const LinearGradient(
+                                        colors: [
+                                          CupertinoAppColors.purple,
+                                          CupertinoAppColors.primaryBlue,
+                                        ],
+                                      ).createShader(bounds),
+                                      child: Text(
+                                        'FitTrack',
+                                        textAlign: TextAlign.center,
+                                        style: _clean(sfText(
+                                          fontSize: 28,
+                                          fontWeight: FontWeight.w800,
+                                          color: CupertinoAppColors.textPrimary,
+                                          letterSpacing: 0.4,
+                                        )),
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 6),
+                                  StaggeredFadeIn(
+                                    index: 2,
+                                    child: Text(
+                                      'Your fitness journey starts here',
+                                      textAlign: TextAlign.center,
+                                      style: _clean(sfText(
+                                        fontSize: 13,
+                                        color: CupertinoAppColors.textTertiary,
+                                        letterSpacing: 0.1,
+                                      )),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 26),
+                                  StaggeredFadeIn(
+                                    index: 3,
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.center,
+                                      children: [
+                                        Text(
+                                          'Login as',
+                                          style: _clean(sfText(
+                                            fontSize: 12,
+                                            color: CupertinoAppColors.textTertiary,
+                                          )),
+                                        ),
+                                        const SizedBox(height: 10),
+                                        _buildRoleToggle(),
+                                      ],
+                                    ),
+                                  ),
+                                  const SizedBox(height: 22),
+                                  StaggeredFadeIn(
+                                    index: 4,
+                                    child: Semantics(
+                                      label: 'Email address input',
+                                      child: AnimatedBuilder(
+                                        animation: _emailFocus,
+                                        builder: (context, child) =>
+                                            AnimatedContainer(
+                                          duration:
+                                              const Duration(milliseconds: 180),
+                                          decoration: BoxDecoration(
+                                            color: CupertinoAppColors.cardElevated,
+                                            borderRadius:
+                                                BorderRadius.circular(14),
+                                            border: Border.all(
+                                              color: _emailFocus.hasFocus
+                                                  ? CupertinoAppColors.primaryBlue
+                                                      .withOpacity(0.6)
+                                                  : CupertinoAppColors.separator
+                                                      .withOpacity(0.4),
+                                              width: _emailFocus.hasFocus ? 1.4 : 1,
+                                            ),
+                                          ),
+                                          child: child,
+                                        ),
+                                        child: CupertinoTextField(
+                                          controller: _emailController,
+                                          focusNode: _emailFocus,
+                                          placeholder: 'Email',
+                                          placeholderStyle: _clean(sfText(
+                                            fontSize: 15,
+                                            color: CupertinoAppColors.textTertiary,
+                                          )),
+                                          keyboardType: TextInputType.emailAddress,
+                                          textInputAction: TextInputAction.next,
+                                          style: _clean(sfText(
+                                            fontSize: 15,
+                                            color: CupertinoAppColors.textPrimary,
+                                          )),
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 16,
+                                            vertical: 14,
+                                          ),
+                                          decoration: const BoxDecoration(),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 14),
+                                  StaggeredFadeIn(
+                                    index: 5,
+                                    child: Semantics(
+                                      label: 'Password input',
+                                      child: AnimatedBuilder(
+                                        animation: _passwordFocus,
+                                        builder: (context, child) =>
+                                            AnimatedContainer(
+                                          duration:
+                                              const Duration(milliseconds: 180),
+                                          decoration: BoxDecoration(
+                                            color: CupertinoAppColors.cardElevated,
+                                            borderRadius:
+                                                BorderRadius.circular(14),
+                                            border: Border.all(
+                                              color: _passwordFocus.hasFocus
+                                                  ? CupertinoAppColors.primaryBlue
+                                                      .withOpacity(0.6)
+                                                  : CupertinoAppColors.separator
+                                                      .withOpacity(0.4),
+                                              width:
+                                                  _passwordFocus.hasFocus ? 1.4 : 1,
+                                            ),
+                                          ),
+                                          child: child,
+                                        ),
+                                        child: CupertinoTextField(
+                                          controller: _passwordController,
+                                          focusNode: _passwordFocus,
+                                          placeholder: 'Password',
+                                          placeholderStyle: _clean(sfText(
+                                            fontSize: 15,
+                                            color: CupertinoAppColors.textTertiary,
+                                          )),
+                                          obscureText: _obscurePassword,
+                                          textInputAction: TextInputAction.done,
+                                          onSubmitted: (_) => _login(),
+                                          style: _clean(sfText(
+                                            fontSize: 15,
+                                            color: CupertinoAppColors.textPrimary,
+                                          )),
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 16,
+                                            vertical: 14,
+                                          ),
+                                          decoration: const BoxDecoration(),
+                                          suffix: Padding(
+                                            padding: const EdgeInsets.only(right: 2),
+                                            child: GestureDetector(
+                                              behavior: HitTestBehavior.opaque,
+                                              onTap: () => setState(
+                                                () => _obscurePassword =
+                                                    !_obscurePassword,
+                                              ),
+                                              child: Padding(
+                                                padding: const EdgeInsets.all(8),
+                                                child: Icon(
+                                                  _obscurePassword
+                                                      ? CupertinoIcons.eye_slash
+                                                      : CupertinoIcons.eye,
+                                                  color: CupertinoAppColors
+                                                      .textTertiary,
+                                                  size: 18,
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  if (_error != null) ...[
+                                    const SizedBox(height: 14),
+                                    AnimatedBuilder(
+                                      animation: _fadeAnim,
+                                      builder: (context, child) => Opacity(
+                                        opacity: _fadeAnim.value,
+                                        child: Transform.translate(
+                                          offset:
+                                              Offset(0, (1 - _fadeAnim.value) * -6),
+                                          child: child,
+                                        ),
+                                      ),
+                                      child: Container(
+                                        width: double.infinity,
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 12,
+                                          vertical: 10,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color:
+                                              CupertinoAppColors.red.withOpacity(0.12),
+                                          borderRadius: BorderRadius.circular(12),
+                                          border: Border.all(
+                                            color: CupertinoAppColors.red
+                                                .withOpacity(0.3),
+                                          ),
+                                        ),
+                                        child: Row(
+                                          children: [
+                                            const Icon(
+                                              CupertinoIcons.exclamationmark_circle,
+                                              color: CupertinoAppColors.red,
+                                              size: 16,
+                                            ),
+                                            const SizedBox(width: 8),
+                                            Expanded(
+                                              child: Text(
+                                                _error!,
+                                                style: _clean(sfText(
+                                                  color: CupertinoAppColors.red,
+                                                  fontSize: 13,
+                                                )),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                  const SizedBox(height: 22),
+                                  StaggeredFadeIn(
+                                    index: 6,
+                                    child: SizedBox(
+                                      width: double.infinity,
+                                      height: 52,
+                                      child: CupertinoButton(
+                                        onPressed: _loading ? null : _login,
+                                        padding: EdgeInsets.zero,
+                                        borderRadius: BorderRadius.circular(16),
+                                        child: Container(
+                                          width: double.infinity,
+                                          height: 52,
+                                          alignment: Alignment.center,
+                                          decoration: BoxDecoration(
+                                            borderRadius: BorderRadius.circular(16),
+                                            gradient: const LinearGradient(
+                                              begin: Alignment.centerLeft,
+                                              end: Alignment.centerRight,
+                                              colors: [
+                                                CupertinoAppColors.purple,
+                                                CupertinoAppColors.primaryBlue,
+                                              ],
+                                            ),
+                                            boxShadow: [
+                                              BoxShadow(
+                                                color: CupertinoAppColors
+                                                    .primaryBlue
+                                                    .withOpacity(0.35),
+                                                blurRadius: 18,
+                                                offset: const Offset(0, 10),
+                                              ),
+                                            ],
+                                          ),
+                                          child: _loading
+                                              ? const CupertinoActivityIndicator(
+                                                  color:
+                                                      CupertinoAppColors.textPrimary,
+                                                )
+                                              : Text(
+                                                  'Sign In',
+                                                  style: _clean(sfText(
+                                                    fontSize: 17,
+                                                    fontWeight: FontWeight.w600,
+                                                    color: CupertinoAppColors
+                                                        .textPrimary,
+                                                    letterSpacing: 0.2,
+                                                  )),
+                                                ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 18),
+                                  Text(
+                                    'v1.0.0 \u00b7 Powered by FitTrack',
+                                    textAlign: TextAlign.center,
+                                    style: _clean(sfText(
+                                      fontSize: 10,
+                                      color: CupertinoAppColors.textTertiary,
+                                    )),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            // Floating logo badge — overlaps the top edge of the
+                            // card, matching the reference layout.
+                            Positioned(
+                              top: 0,
+                              child: StaggeredFadeIn(
+                                index: 0,
+                                child: Container(
+                                  width: 84,
+                                  height: 84,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    gradient: const LinearGradient(
+                                      begin: Alignment.topLeft,
+                                      end: Alignment.bottomRight,
+                                      colors: [
+                                        CupertinoAppColors.purple,
+                                        CupertinoAppColors.primaryBlue,
+                                      ],
+                                    ),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: CupertinoAppColors.primaryBlue
+                                            .withOpacity(0.38),
+                                        blurRadius: 22,
+                                        offset: const Offset(0, 10),
+                                      ),
+                                    ],
+                                  ),
+                                  child: const Icon(
+                                    CupertinoIcons.person,
+                                    color: CupertinoAppColors.textPrimary,
+                                    size: 36,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 32),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Soft, non-interactive gradient glow used behind the login card for depth.
+class _GlowBlob extends StatelessWidget {
+  final double size;
+  final List<Color> colors;
+
+  const _GlowBlob({required this.size, required this.colors});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        gradient: RadialGradient(colors: colors),
       ),
     );
   }
