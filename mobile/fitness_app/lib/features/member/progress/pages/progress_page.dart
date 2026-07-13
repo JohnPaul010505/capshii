@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:shared/services/supabase_client.dart';
-import '../../../../app/theme.dart';
 import '../../../shared/widgets/skeleton.dart';
 import '../../../shared/widgets/pressable.dart';
 import '../../../shared/widgets/animations.dart';

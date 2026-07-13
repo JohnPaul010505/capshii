@@ -4,13 +4,12 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared/services/supabase_client.dart';
-import '../../../../app/cupertino_theme.dart';
-import 'package:google_fonts/google_fonts.dart';
+import '../../../../app/design_tokens.dart';
 
 final memberProfileProvider = FutureProvider.autoDispose.family<Map<String, dynamic>, String>((ref, id) async {
   final client = SupabaseClientService().client;
   final response = await client.from('profiles').select('id, full_name').eq('id', id).single();
-  return response as Map<String, dynamic>;
+  return response;
 });
 
 final memberWorkoutsProvider = FutureProvider.autoDispose.family<List<Map<String, dynamic>>, String>((ref, id) async {
@@ -160,26 +159,26 @@ class _MemberProgressPageState extends ConsumerState<MemberProgressPage> {
                   children: [
                     GestureDetector(
                       onTap: () => context.pop(),
-                      child: const Icon(CupertinoIcons.chevron_back, color: CupertinoAppColors.textPrimary, size: 22),
+                      child: Icon(CupertinoIcons.chevron_back, color: ClayTokens.clayDarkTextPrimary, size: 22),
                     ),
                     const SizedBox(width: 12),
                     Container(
                       width: 36, height: 36,
-                      decoration: const BoxDecoration(
+                      decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: CupertinoAppColors.cardElevated,
+                        color: ClayTokens.clayDarkSurfaceElevated,
                       ),
                       alignment: Alignment.center,
-                      child: Text(initials, style: sfText(fontSize: 15, fontWeight: FontWeight.w600, color: CupertinoAppColors.textPrimary)),
+                      child: Text(initials, style: ClayTokens.titleLarge.copyWith(fontSize: 15, fontWeight: FontWeight.w600, color: ClayTokens.clayDarkTextPrimary)),
                     ),
                     const SizedBox(width: 10),
-                    Text(name, style: sfText(fontSize: 16, fontWeight: FontWeight.w600, color: CupertinoAppColors.textPrimary, letterSpacing: -0.24)),
+                    Text(name, style: ClayTokens.titleLarge.copyWith(fontWeight: FontWeight.w600, color: ClayTokens.clayDarkTextPrimary, letterSpacing: -0.24)),
                   ],
                 ),
                 const SizedBox(height: 16),
 
                 // Weight trend
-                Text('Weight Trend', style: sfText(fontSize: 13, fontWeight: FontWeight.w600, color: CupertinoAppColors.textPrimary, letterSpacing: -0.08)),
+                Text('Weight Trend', style: ClayTokens.bodySmall.copyWith(fontSize: 13, fontWeight: FontWeight.w600, color: ClayTokens.clayDarkTextPrimary, letterSpacing: -0.08)),
                 const SizedBox(height: 8),
                 weightAsync.when(
                   data: (weights) => _WeightChart(weights: weights),
@@ -189,62 +188,62 @@ class _MemberProgressPageState extends ConsumerState<MemberProgressPage> {
 
                 // Today's Workouts
                 const SizedBox(height: 14),
-                Text("Today's Workouts", style: sfText(fontSize: 13, fontWeight: FontWeight.w600, color: CupertinoAppColors.textPrimary, letterSpacing: -0.08)),
+                Text("Today's Workouts", style: ClayTokens.bodySmall.copyWith(fontSize: 13, fontWeight: FontWeight.w600, color: ClayTokens.clayDarkTextPrimary, letterSpacing: -0.08)),
                 const SizedBox(height: 8),
                 workoutsAsync.when(
                   data: (workouts) => workouts.isEmpty
                       ? Padding(padding: const EdgeInsets.symmetric(vertical: 12),
-                          child: Text('No workouts logged today', style: sfText(fontSize: 13, fontWeight: FontWeight.w400, color: CupertinoAppColors.textTertiary, letterSpacing: -0.08)))
+                          child: Text('No workouts logged today', style: ClayTokens.bodySmall.copyWith(fontSize: 13, fontWeight: FontWeight.w400, color: ClayTokens.clayDarkTextTertiary, letterSpacing: -0.08)))
                       : Column(
                           children: workouts.map((w) => _WorkoutTile(workout: w)).toList(),
                         ),
-                  loading: () => const Center(child: Padding(
-                    padding: EdgeInsets.all(12), child: CupertinoActivityIndicator(radius: 12, color: CupertinoAppColors.primaryBlue))),
-                  error: (e, _) => Text('Error: $e', style: sfText(fontSize: 11, fontWeight: FontWeight.w400, color: CupertinoAppColors.textTertiary, letterSpacing: -0.08)),
+                  loading: () => Center(child: Padding(
+                    padding: EdgeInsets.all(12), child: CupertinoActivityIndicator(radius: 12, color: ClayTokens.clayPrimary))),
+                  error: (e, _) => Text('Error: $e', style: ClayTokens.labelMedium.copyWith(fontSize: 11, fontWeight: FontWeight.w400, color: ClayTokens.clayDarkTextTertiary, letterSpacing: -0.08)),
                 ),
 
                 // Today's Meals
                 const SizedBox(height: 14),
-                Text("Today's Meals", style: sfText(fontSize: 13, fontWeight: FontWeight.w600, color: CupertinoAppColors.textPrimary, letterSpacing: -0.08)),
+                Text("Today's Meals", style: ClayTokens.bodySmall.copyWith(fontSize: 13, fontWeight: FontWeight.w600, color: ClayTokens.clayDarkTextPrimary, letterSpacing: -0.08)),
                 const SizedBox(height: 8),
                 mealsAsync.when(
                   data: (meals) => meals.isEmpty
                       ? Padding(padding: const EdgeInsets.symmetric(vertical: 12),
-                          child: Text('No meals logged today', style: sfText(fontSize: 13, fontWeight: FontWeight.w400, color: CupertinoAppColors.textTertiary, letterSpacing: -0.08)))
+                          child: Text('No meals logged today', style: ClayTokens.bodySmall.copyWith(fontSize: 13, fontWeight: FontWeight.w400, color: ClayTokens.clayDarkTextTertiary, letterSpacing: -0.08)))
                       : Column(
                           children: meals.map((m) => _MealTile(meal: m)).toList(),
                         ),
-                  loading: () => const Center(child: Padding(
-                    padding: EdgeInsets.all(12), child: CupertinoActivityIndicator(radius: 12, color: CupertinoAppColors.primaryBlue))),
-                  error: (e, _) => Text('Error: $e', style: sfText(fontSize: 11, fontWeight: FontWeight.w400, color: CupertinoAppColors.textTertiary, letterSpacing: -0.08)),
+                  loading: () => Center(child: Padding(
+                    padding: EdgeInsets.all(12), child: CupertinoActivityIndicator(radius: 12, color: ClayTokens.clayPrimary))),
+                  error: (e, _) => Text('Error: $e', style: ClayTokens.labelMedium.copyWith(fontSize: 11, fontWeight: FontWeight.w400, color: ClayTokens.clayDarkTextTertiary, letterSpacing: -0.08)),
                 ),
 
                 // Goals
                 const SizedBox(height: 14),
-                Text('Goals', style: sfText(fontSize: 13, fontWeight: FontWeight.w600, color: CupertinoAppColors.textPrimary, letterSpacing: -0.08)),
+                Text('Goals', style: ClayTokens.bodySmall.copyWith(fontSize: 13, fontWeight: FontWeight.w600, color: ClayTokens.clayDarkTextPrimary, letterSpacing: -0.08)),
                 const SizedBox(height: 8),
                 goalsAsync.when(
                   data: (goals) => goals.isEmpty
                       ? Padding(padding: const EdgeInsets.symmetric(vertical: 12),
-                          child: Text('No goals set', style: sfText(fontSize: 13, fontWeight: FontWeight.w400, color: CupertinoAppColors.textTertiary, letterSpacing: -0.08)))
+                          child: Text('No goals set', style: ClayTokens.bodySmall.copyWith(fontSize: 13, fontWeight: FontWeight.w400, color: ClayTokens.clayDarkTextTertiary, letterSpacing: -0.08)))
                       : Column(
                           children: goals.map((g) => _GoalTile(goal: g)).toList(),
                         ),
-                  loading: () => const Center(child: Padding(
-                    padding: EdgeInsets.all(12), child: CupertinoActivityIndicator(radius: 12, color: CupertinoAppColors.primaryBlue))),
-                  error: (e, _) => Text('Error: $e', style: sfText(fontSize: 11, fontWeight: FontWeight.w400, color: CupertinoAppColors.textTertiary, letterSpacing: -0.08)),
+                  loading: () => Center(child: Padding(
+                    padding: EdgeInsets.all(12), child: CupertinoActivityIndicator(radius: 12, color: ClayTokens.clayPrimary))),
+                  error: (e, _) => Text('Error: $e', style: ClayTokens.labelMedium.copyWith(fontSize: 11, fontWeight: FontWeight.w400, color: ClayTokens.clayDarkTextTertiary, letterSpacing: -0.08)),
                 ),
 
                 // Submit feedback
                 const SizedBox(height: 14),
-                Text('Send Feedback', style: sfText(fontSize: 13, fontWeight: FontWeight.w600, color: CupertinoAppColors.textPrimary, letterSpacing: -0.08)),
+                Text('Send Feedback', style: ClayTokens.bodySmall.copyWith(fontSize: 13, fontWeight: FontWeight.w600, color: ClayTokens.clayDarkTextPrimary, letterSpacing: -0.08)),
                 const SizedBox(height: 8),
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: CupertinoAppColors.groupedBackground,
+                    color: ClayTokens.clayDarkSurface,
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: CupertinoAppColors.separator.withAlpha(100)),
+                    border: Border.all(color: ClayTokens.clayDarkBorder.withAlpha(100)),
                   ),
                   child: Column(
                     children: [
@@ -255,7 +254,7 @@ class _MemberProgressPageState extends ConsumerState<MemberProgressPage> {
                           filled: true,
                         ),
                         maxLines: 3,
-                        style: sfText(fontSize: 13, fontWeight: FontWeight.w400, color: CupertinoAppColors.textPrimary, letterSpacing: -0.08),
+                        style: ClayTokens.bodySmall.copyWith(fontSize: 13, fontWeight: FontWeight.w400, color: ClayTokens.clayDarkTextPrimary, letterSpacing: -0.08),
                       ),
                       const SizedBox(height: 8),
                       GestureDetector(
@@ -263,13 +262,13 @@ class _MemberProgressPageState extends ConsumerState<MemberProgressPage> {
                         child: Container(
                           width: double.infinity,
                           padding: const EdgeInsets.symmetric(vertical: 10),
-                          decoration: const BoxDecoration(
-                            color: CupertinoAppColors.primaryBlue,
-                            borderRadius: BorderRadius.all(Radius.circular(10)),
+                          decoration: BoxDecoration(
+                            color: ClayTokens.clayPrimary,
+                            borderRadius: const BorderRadius.all(Radius.circular(10)),
                           ),
                           child: Text('Send Feedback',
                             textAlign: TextAlign.center,
-                            style: sfText(color: CupertinoAppColors.textPrimary, fontSize: 15, fontWeight: FontWeight.w600, letterSpacing: -0.24)),
+                            style: ClayTokens.titleLarge.copyWith(fontSize: 15, color: ClayTokens.clayDarkTextPrimary, fontWeight: FontWeight.w600, letterSpacing: -0.24)),
                         ),
                       ),
                     ],
@@ -279,8 +278,8 @@ class _MemberProgressPageState extends ConsumerState<MemberProgressPage> {
               ],
             );
           },
-          loading: () => const Center(child: CupertinoActivityIndicator(radius: 12, color: CupertinoAppColors.primaryBlue)),
-          error: (e, _) => Center(child: Text('Error: $e', style: sfText(fontSize: 12, fontWeight: FontWeight.w400, color: CupertinoAppColors.textQuaternary))),
+          loading: () => Center(child: CupertinoActivityIndicator(radius: 12, color: ClayTokens.clayPrimary)),
+          error: (e, _) => Center(child: Text('Error: $e', style: ClayTokens.labelMedium.copyWith(fontWeight: FontWeight.w400, color: ClayTokens.clayDarkTextTertiary))),
         ),
       ),
     );
@@ -298,11 +297,11 @@ class _WeightChart extends StatelessWidget {
       return Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: CupertinoAppColors.groupedBackground,
+          color: ClayTokens.clayDarkSurface,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: CupertinoAppColors.separator.withAlpha(100)),
+          border: Border.all(color: ClayTokens.clayDarkBorder.withAlpha(100)),
         ),
-        child: Center(child: Text('No weight data', style: sfText(fontSize: 13, fontWeight: FontWeight.w400, color: CupertinoAppColors.textTertiary, letterSpacing: -0.08))),
+        child: Center(child: Text('No weight data', style: ClayTokens.bodySmall.copyWith(fontSize: 13, fontWeight: FontWeight.w400, color: ClayTokens.clayDarkTextTertiary, letterSpacing: -0.08))),
       );
     }
 
@@ -314,9 +313,9 @@ class _WeightChart extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: CupertinoAppColors.groupedBackground,
+        color: ClayTokens.clayDarkSurface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: CupertinoAppColors.separator.withAlpha(100)),
+        border: Border.all(color: ClayTokens.clayDarkBorder.withAlpha(100)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -337,8 +336,8 @@ class _WeightChart extends StatelessWidget {
                       margin: const EdgeInsets.symmetric(horizontal: 2),
                       decoration: BoxDecoration(
                         borderRadius: const BorderRadius.vertical(top: Radius.circular(3)),
-                        gradient: const LinearGradient(
-                          colors: [CupertinoAppColors.purple, CupertinoAppColors.purpleLight],
+                        gradient: LinearGradient(
+                          colors: [ClayTokens.clayPrimary, ClayTokens.clayPrimaryLight],
                           begin: Alignment.bottomCenter,
                           end: Alignment.topCenter,
                         ),
@@ -351,7 +350,7 @@ class _WeightChart extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text('${reversed.length} measurements · Tap bar for weight',
-            style: sfText(fontSize: 11, fontWeight: FontWeight.w500, color: CupertinoAppColors.textTertiary, letterSpacing: 0.06)),
+            style: ClayTokens.labelMedium.copyWith(fontSize: 11, fontWeight: FontWeight.w500, color: ClayTokens.clayDarkTextTertiary, letterSpacing: 0.06)),
         ],
       ),
     );
@@ -372,11 +371,11 @@ class _ChartSkeleton extends StatelessWidget {
     return Container(
       height: 80,
       decoration: BoxDecoration(
-        color: CupertinoAppColors.groupedBackground,
+        color: ClayTokens.clayDarkSurface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: CupertinoAppColors.separator.withAlpha(100)),
+        border: Border.all(color: ClayTokens.clayDarkBorder.withAlpha(100)),
       ),
-      child: const Center(child: CupertinoActivityIndicator(radius: 10, color: CupertinoAppColors.primaryBlue)),
+      child: Center(child: CupertinoActivityIndicator(radius: 10, color: ClayTokens.clayPrimary)),
     );
   }
 }
@@ -396,27 +395,27 @@ class _WorkoutTile extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       margin: const EdgeInsets.only(bottom: 6),
       decoration: BoxDecoration(
-        color: CupertinoAppColors.groupedBackground,
+        color: ClayTokens.clayDarkSurface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: CupertinoAppColors.separator.withAlpha(100)),
+        border: Border.all(color: ClayTokens.clayDarkBorder.withAlpha(100)),
       ),
       child: Row(
         children: [
           Container(
             width: 28, height: 28,
             decoration: BoxDecoration(
-              color: CupertinoAppColors.primaryBlue.withAlpha(25),
+              color: ClayTokens.clayPrimary.withAlpha(25),
               borderRadius: BorderRadius.circular(8),
             ),
-            child: const Icon(CupertinoIcons.person, color: CupertinoAppColors.primaryBlue, size: 14),
+            child: Icon(CupertinoIcons.person, color: ClayTokens.clayPrimary, size: 14),
           ),
           const SizedBox(width: 8),
-          Expanded(child: Text(name, style: sfText(fontSize: 13, fontWeight: FontWeight.w500, color: CupertinoAppColors.textPrimary, letterSpacing: -0.08))),
+          Expanded(child: Text(name, style: ClayTokens.bodySmall.copyWith(fontSize: 13, fontWeight: FontWeight.w500, color: ClayTokens.clayDarkTextPrimary, letterSpacing: -0.08))),
           if (sets != null)
-            Text('$sets×$reps', style: sfText(fontSize: 11, fontWeight: FontWeight.w600, color: CupertinoAppColors.primaryBlue, letterSpacing: -0.08)),
+            Text('$sets×$reps', style: ClayTokens.labelMedium.copyWith(fontSize: 11, fontWeight: FontWeight.w600, color: ClayTokens.clayPrimary, letterSpacing: -0.08)),
           if (weight != null) ...[
             const SizedBox(width: 4),
-            Text('${weight}kg', style: sfText(fontSize: 11, fontWeight: FontWeight.w500, color: CupertinoAppColors.textTertiary, letterSpacing: 0.06)),
+            Text('${weight}kg', style: ClayTokens.labelMedium.copyWith(fontSize: 11, fontWeight: FontWeight.w500, color: ClayTokens.clayDarkTextTertiary, letterSpacing: 0.06)),
           ],
         ],
       ),
@@ -438,34 +437,34 @@ class _MealTile extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       margin: const EdgeInsets.only(bottom: 6),
       decoration: BoxDecoration(
-        color: CupertinoAppColors.groupedBackground,
+        color: ClayTokens.clayDarkSurface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: CupertinoAppColors.separator.withAlpha(100)),
+        border: Border.all(color: ClayTokens.clayDarkBorder.withAlpha(100)),
       ),
       child: Row(
         children: [
           Container(
             width: 28, height: 28,
             decoration: BoxDecoration(
-              color: CupertinoAppColors.orange.withAlpha(25),
+              color: ClayTokens.clayWarning.withAlpha(25),
               borderRadius: BorderRadius.circular(8),
             ),
-            child: const Icon(CupertinoIcons.tray, color: CupertinoAppColors.orange, size: 14),
+            child: Icon(CupertinoIcons.tray, color: ClayTokens.clayWarning, size: 14),
           ),
           const SizedBox(width: 8),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(name, style: sfText(fontSize: 13, fontWeight: FontWeight.w500, color: CupertinoAppColors.textPrimary, letterSpacing: -0.08)),
+                Text(name, style: ClayTokens.bodySmall.copyWith(fontSize: 13, fontWeight: FontWeight.w500, color: ClayTokens.clayDarkTextPrimary, letterSpacing: -0.08)),
                 if (type.isNotEmpty)
                   Text(type[0].toUpperCase() + type.substring(1),
-                    style: sfText(fontSize: 11, fontWeight: FontWeight.w400, color: CupertinoAppColors.textTertiary, letterSpacing: 0.06)),
+                    style: ClayTokens.labelMedium.copyWith(fontSize: 11, fontWeight: FontWeight.w400, color: ClayTokens.clayDarkTextTertiary, letterSpacing: 0.06)),
               ],
             ),
           ),
           if (calories != null)
-            Text('$calories kcal', style: sfText(fontSize: 11, fontWeight: FontWeight.w600, color: CupertinoAppColors.orange, letterSpacing: -0.08)),
+            Text('$calories kcal', style: ClayTokens.labelMedium.copyWith(fontSize: 11, fontWeight: FontWeight.w600, color: ClayTokens.clayWarning, letterSpacing: -0.08)),
         ],
       ),
     );
@@ -484,30 +483,30 @@ class _GoalTile extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       margin: const EdgeInsets.only(bottom: 6),
       decoration: BoxDecoration(
-        color: CupertinoAppColors.groupedBackground,
+        color: ClayTokens.clayDarkSurface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: CupertinoAppColors.separator.withAlpha(100)),
+        border: Border.all(color: ClayTokens.clayDarkBorder.withAlpha(100)),
       ),
       child: Row(
         children: [
           Icon(
             status == 'completed' ? CupertinoIcons.checkmark_circle : CupertinoIcons.flag,
-            color: status == 'completed' ? CupertinoAppColors.green : CupertinoAppColors.orange,
+            color: status == 'completed' ? ClayTokens.clayAccent : ClayTokens.clayWarning,
             size: 16,
           ),
           const SizedBox(width: 8),
-          Expanded(child: Text(title, style: sfText(fontSize: 13, fontWeight: FontWeight.w500, color: CupertinoAppColors.textPrimary, letterSpacing: -0.08))),
+          Expanded(child: Text(title, style: ClayTokens.bodySmall.copyWith(fontSize: 13, fontWeight: FontWeight.w500, color: ClayTokens.clayDarkTextPrimary, letterSpacing: -0.08))),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
             decoration: BoxDecoration(
               color: status == 'completed'
-                  ? CupertinoAppColors.green.withAlpha(20)
-                  : CupertinoAppColors.orange.withAlpha(20),
+                  ? ClayTokens.clayAccent.withAlpha(20)
+                  : ClayTokens.clayWarning.withAlpha(20),
               borderRadius: BorderRadius.circular(10),
             ),
-            child: Text(status, style: sfText(
+            child: Text(status, style: ClayTokens.labelMedium.copyWith(
               fontSize: 11, fontWeight: FontWeight.w600,
-              color: status == 'completed' ? CupertinoAppColors.green : CupertinoAppColors.orange,
+              color: status == 'completed' ? ClayTokens.clayAccent : ClayTokens.clayWarning,
               letterSpacing: -0.08,
             )),
           ),

@@ -1,12 +1,10 @@
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:shared/providers/auth_provider.dart';
 import 'package:shared/services/supabase_client.dart';
-import '../../../app/cupertino_theme.dart';
+import '../../../app/design_tokens.dart';
 
 class CheckinPage extends ConsumerStatefulWidget {
   const CheckinPage({super.key});
@@ -83,7 +81,7 @@ class _CheckinPageState extends ConsumerState<CheckinPage> {
   @override
   Widget build(BuildContext context) {
     return CupertinoPageScaffold(
-      backgroundColor: CupertinoAppColors.background,
+      backgroundColor: ClayTokens.clayDarkBase,
       child: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -97,9 +95,9 @@ class _CheckinPageState extends ConsumerState<CheckinPage> {
                     Container(
                       height: 250,
                       decoration: BoxDecoration(
-                        color: CupertinoAppColors.groupedBackground,
+                        color: ClayTokens.clayDarkSurface,
                         borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: CupertinoAppColors.separator.withOpacity(0.5)),
+                        border: Border.all(color: ClayTokens.clayDarkBorder.withAlpha(128)),
                       ),
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(16),
@@ -117,23 +115,23 @@ class _CheckinPageState extends ConsumerState<CheckinPage> {
                       child: Container(
                         height: 250,
                         decoration: BoxDecoration(
-                          color: CupertinoAppColors.groupedBackground,
+                          color: ClayTokens.clayDarkSurface,
                           borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: CupertinoAppColors.separator.withOpacity(0.5)),
+                          border: Border.all(color: ClayTokens.clayDarkBorder.withAlpha(128)),
                         ),
                         child: Center(
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              const Icon(
+                              Icon(
                                 CupertinoIcons.qrcode_viewfinder,
                                 size: 64,
-                                color: CupertinoAppColors.textTertiary,
+                                color: ClayTokens.clayDarkTextTertiary,
                               ),
                               const SizedBox(height: 8),
                               Text(
                                 'Tap to open scanner',
-                                style: sfText(color: CupertinoAppColors.textTertiary),
+                                style: ClayTokens.bodyMedium.copyWith(color: ClayTokens.clayDarkTextTertiary),
                               ),
                             ],
                           ),
@@ -150,7 +148,7 @@ class _CheckinPageState extends ConsumerState<CheckinPage> {
                             onPressed: () => setState(() => _showScanner = false),
                             child: Text(
                               'Close Scanner',
-                              style: sfText(color: CupertinoAppColors.primaryBlue),
+                              style: ClayTokens.bodyMedium.copyWith(color: ClayTokens.clayPrimary),
                             ),
                           ),
                         ],
@@ -164,13 +162,13 @@ class _CheckinPageState extends ConsumerState<CheckinPage> {
                       onPressed: _processing ? null : _toggleAttendance,
                       borderRadius: BorderRadius.circular(12),
                       child: _processing
-                          ? const CupertinoActivityIndicator(color: CupertinoAppColors.textPrimary, radius: 10)
+                          ? CupertinoActivityIndicator(color: ClayTokens.clayDarkTextPrimary, radius: 10)
                           : Text(
                               'Check In / Check Out',
-                              style: sfText(
+                              style: ClayTokens.titleLarge.copyWith(
                                 fontSize: 17,
                                 fontWeight: FontWeight.w600,
-                                color: CupertinoAppColors.textPrimary,
+                                color: ClayTokens.clayDarkTextPrimary,
                               ),
                             ),
                     ),
@@ -183,8 +181,8 @@ class _CheckinPageState extends ConsumerState<CheckinPage> {
                         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                         decoration: BoxDecoration(
                           color: _isSuccess
-                              ? CupertinoAppColors.green.withOpacity(0.1)
-                              : CupertinoAppColors.red.withOpacity(0.1),
+                              ? ClayTokens.clayAccent.withAlpha(26)
+                              : ClayTokens.clayError.withAlpha(26),
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: Row(
@@ -194,19 +192,19 @@ class _CheckinPageState extends ConsumerState<CheckinPage> {
                                   ? CupertinoIcons.checkmark_circle_fill
                                   : CupertinoIcons.xmark_circle_fill,
                               color: _isSuccess
-                                  ? CupertinoAppColors.green
-                                  : CupertinoAppColors.red,
+                                  ? ClayTokens.clayAccent
+                                  : ClayTokens.clayError,
                               size: 20,
                             ),
                             const SizedBox(width: 10),
                             Expanded(
                               child: Text(
                                 _statusMessage!,
-                                style: sfText(
+                                style: ClayTokens.titleLarge.copyWith(
                                   fontSize: 15,
                                   color: _isSuccess
-                                      ? CupertinoAppColors.green
-                                      : CupertinoAppColors.red,
+                                      ? ClayTokens.clayAccent
+                                      : ClayTokens.clayError,
                                   letterSpacing: -0.24,
                                 ),
                               ),
@@ -218,7 +216,7 @@ class _CheckinPageState extends ConsumerState<CheckinPage> {
                   const SizedBox(height: 16),
                   Text(
                     'Scan the gym QR code or tap the button above to check in or out.',
-                    style: sfText(color: CupertinoAppColors.textTertiary, fontSize: 13),
+                    style: ClayTokens.bodySmall.copyWith(color: ClayTokens.clayDarkTextTertiary, fontSize: 13),
                     textAlign: TextAlign.center,
                   ),
                 ],
@@ -233,29 +231,24 @@ class _CheckinPageState extends ConsumerState<CheckinPage> {
   Widget _buildHeader(String title) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-      decoration: BoxDecoration(
-        border: Border(
-          bottom: BorderSide(color: CupertinoAppColors.separator, width: 0.5),
-        ),
-      ),
       child: Row(
         children: [
           CupertinoButton(
             padding: EdgeInsets.zero,
             onPressed: () => context.pop(),
-            child: const Icon(
+            child: Icon(
               CupertinoIcons.back,
-              color: CupertinoAppColors.primaryBlue,
+              color: ClayTokens.clayPrimary,
             ),
           ),
           Expanded(
             child: Text(
               title,
               textAlign: TextAlign.center,
-              style: sfText(
+              style: ClayTokens.titleLarge.copyWith(
                 fontSize: 17,
                 fontWeight: FontWeight.w600,
-                color: CupertinoAppColors.textPrimary,
+                color: ClayTokens.clayDarkTextPrimary,
                 letterSpacing: -0.41,
               ),
             ),

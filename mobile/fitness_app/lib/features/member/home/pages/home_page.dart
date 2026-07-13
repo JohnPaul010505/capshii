@@ -1,13 +1,14 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared/providers/auth_provider.dart';
 import 'package:shared/services/supabase_client.dart';
-import '../../../../app/theme.dart';
 import '../../../shared/widgets/skeleton.dart';
-import '../../../shared/widgets/pressable.dart';
 import '../../../shared/widgets/animations.dart';
+import '../../../../app/design_tokens.dart';
+import '../../../shared/widgets/clay/clay_card.dart';
+import '../../../shared/widgets/clay/clay_button.dart';
+import '../../../shared/widgets/clay/clay_avatar.dart';
 
 final homeDataProvider = FutureProvider.autoDispose<Map<String, dynamic>>((ref) async {
   final userId = SupabaseClientService().client.auth.currentUser!.id;
@@ -40,8 +41,8 @@ final homeDataProvider = FutureProvider.autoDispose<Map<String, dynamic>>((ref) 
       .limit(1);
 
   Map<String, dynamic>? latestMeasurement;
-  if ((measurements as List).isNotEmpty) {
-    latestMeasurement = measurements[0] as Map<String, dynamic>;
+  if (measurements.isNotEmpty) {
+    latestMeasurement = measurements[0];
   }
 
   final goals = await client
@@ -68,7 +69,7 @@ final homeDataProvider = FutureProvider.autoDispose<Map<String, dynamic>>((ref) 
         .select('id, full_name, avatar_url')
         .eq('id', trainerId)
         .single();
-    trainerProfile = trainerResp as Map<String, dynamic>;
+    trainerProfile = trainerResp;
   }
 
   final membershipResp = await client
@@ -79,8 +80,8 @@ final homeDataProvider = FutureProvider.autoDispose<Map<String, dynamic>>((ref) 
       .limit(1);
 
   Map<String, dynamic>? membership;
-  if ((membershipResp as List).isNotEmpty) {
-    membership = membershipResp[0] as Map<String, dynamic>;
+  if (membershipResp.isNotEmpty) {
+    membership = membershipResp[0];
   }
 
   return {
@@ -102,7 +103,7 @@ class HomePage extends ConsumerWidget {
     final profile = ref.watch(authProvider).valueOrNull;
 
     return Scaffold(
-      backgroundColor: const Color(0xFF000000),
+      backgroundColor: ClayTokens.clayDarkBase,
       body: SafeArea(
         child: dataAsync.when(
           data: (data) => HomeContent(data: data, profile: profile),
@@ -135,11 +136,11 @@ class _ErrorState extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(CupertinoIcons.cloud_download, color: Color(0xFF8E8E93), size: 48),
+            const Icon(Icons.cloud_download_outlined, color: Color(0xFF8E8E93), size: 48),
             const SizedBox(height: 12),
-            Text('Something went wrong', style: Theme.of(context).textTheme.titleMedium),
+            Text('Something went wrong', style: ClayTokens.titleMedium),
             const SizedBox(height: 4),
-            Text(message, style: Theme.of(context).textTheme.bodySmall, textAlign: TextAlign.center),
+            Text(message, style: ClayTokens.bodySmall, textAlign: TextAlign.center),
           ],
         ),
       ),
@@ -239,25 +240,13 @@ class _GreetingRow extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 2),
-            Text(firstName, style: Theme.of(context).textTheme.displaySmall?.copyWith(letterSpacing: 0)),
+            Text(firstName, style: ClayTokens.displaySmall.copyWith(letterSpacing: 0)),
           ],
         ),
-        GestureDetector(
+        ClayAvatar(
+          initials: initials,
+          size: ClayAvatarSize.md,
           onTap: onAvatarTap,
-          child: Container(
-            width: 44,
-            height: 44,
-            decoration: const BoxDecoration(
-              shape: BoxShape.circle,
-              gradient: LinearGradient(
-                colors: [Color(0xFFBF5AF2), Color(0xFFD6A5FF)],
-              ),
-            ),
-            alignment: Alignment.center,
-            child: Text(initials, style: const TextStyle(
-              color: Colors.white, fontSize: 13, fontWeight: FontWeight.w700,
-            )),
-          ),
         ),
       ],
     );
@@ -278,45 +267,36 @@ class _MembershipCard extends StatelessWidget {
         ? endDate.substring(0, 10)
         : 'N/A';
 
-    return Container(
-      padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
-      decoration: BoxDecoration(
-        color: const Color(0xFF1C1C1E),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFF38383A).withAlpha(100)),
-      ),
+    final isActive = status == 'active';
+    final statusColor = isActive ? ClayTokens.clayAccent : ClayTokens.clayWarning;
+
+    return ClayCard(
+      variant: ClayCardVariant.outlined,
+      padding: ClayCardPadding.medium,
       child: Row(
         children: [
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('MEMBERSHIP', style: TextStyle(
-                  fontSize: 10, fontWeight: FontWeight.w700, color: Color(0xFF8E8E93), letterSpacing: 0)),
+                Text('MEMBERSHIP', style: ClayTokens.labelSmall.copyWith(color: ClayTokens.clayDarkTextTertiary)),
                 const SizedBox(height: 3),
-                Text(plan, style: const TextStyle(
-                  fontSize: 16, fontWeight: FontWeight.w800, color: Color(0xFFFFFFFF))),
+                Text(plan, style: ClayTokens.titleLarge.copyWith(color: ClayTokens.clayDarkTextPrimary)),
                 const SizedBox(height: 2),
-                Text('Valid until $formattedDate', style: const TextStyle(
-                  fontSize: 11, color: Color(0xFF8E8E93))),
+                Text('Valid until $formattedDate', style: ClayTokens.bodySmall.copyWith(color: ClayTokens.clayDarkTextTertiary)),
               ],
             ),
           ),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
             decoration: BoxDecoration(
-              color: status == 'active' ? const Color(0xFF30D158).withAlpha(20) : const Color(0xFFFF9500).withAlpha(20),
+              color: statusColor.withAlpha(25),
               borderRadius: BorderRadius.circular(20),
-              border: Border.all(
-                color: status == 'active' ? const Color(0xFF30D158).withAlpha(50) : const Color(0xFFFF9500).withAlpha(50),
-              ),
+              border: Border.all(color: statusColor.withAlpha(60)),
             ),
             child: Text(
-              status == 'active' ? 'ACTIVE' : status.toUpperCase(),
-              style: TextStyle(
-                fontSize: 9, fontWeight: FontWeight.w700,
-                color: status == 'active' ? const Color(0xFF30D158) : const Color(0xFFFF9500),
-              ),
+              isActive ? 'ACTIVE' : status.toUpperCase(),
+              style: TextStyle(fontSize: 9, fontWeight: FontWeight.w700, color: statusColor),
             ),
           ),
         ],
@@ -343,13 +323,9 @@ class _WeekChartState extends State<_WeekChart> {
     final labels = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
     final today = DateTime.now().weekday - 1;
 
-    return Container(
-      decoration: BoxDecoration(
-        color: const Color(0xFF1C1C1E),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFF38383A).withAlpha(100)),
-      ),
-      padding: const EdgeInsets.all(12),
+    return ClayCard(
+      variant: ClayCardVariant.outlined,
+      padding: ClayCardPadding.medium,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -359,32 +335,29 @@ class _WeekChartState extends State<_WeekChart> {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('This Week',
-                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFFFFFFFF))),
+                  Text('This Week', style: ClayTokens.titleMedium.copyWith(color: ClayTokens.clayDarkTextPrimary)),
                   const SizedBox(height: 1),
                   if (_selectedDay != null)
                     AnimatedOpacity(
-                      duration: const Duration(milliseconds: 200),
+                      duration: ClayTokens.normal,
                       opacity: 1.0,
                       child: Text(
                         '${labels[_selectedDay!]}: ${widget.weekCounts[_selectedDay!]} workout${widget.weekCounts[_selectedDay!] == 1 ? '' : 's'}',
-                        style: const TextStyle(fontSize: 10, color: Color(0xFFD6A5FF), fontWeight: FontWeight.w600),
+                        style: TextStyle(fontSize: 10, color: ClayTokens.clayPrimaryLight, fontWeight: FontWeight.w600),
                       ),
                     )
                   else
-                    const Text('Tap a bar for details',
-                      style: TextStyle(fontSize: 10, color: Color(0xFF8E8E93))),
+                    Text('Tap a bar for details', style: TextStyle(fontSize: 10, color: ClayTokens.clayDarkTextTertiary)),
                 ],
               ),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFBF5AF2).withAlpha(20),
+                  color: ClayTokens.clayPrimaryLight.withAlpha(25),
                   borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: const Color(0xFFBF5AF2).withAlpha(40)),
+                  border: Border.all(color: ClayTokens.clayPrimaryLight.withAlpha(50)),
                 ),
-                child: const Text('Goal: 5',
-                  style: TextStyle(fontSize: 10, color: Color(0xFFD6A5FF), fontWeight: FontWeight.w700)),
+                child: Text('Goal: 5', style: TextStyle(fontSize: 10, color: ClayTokens.clayPrimaryLight, fontWeight: FontWeight.w700)),
               ),
             ],
           ),
@@ -412,7 +385,7 @@ class _WeekChartState extends State<_WeekChart> {
                       decoration: BoxDecoration(
                         borderRadius: const BorderRadius.vertical(top: Radius.circular(4)),
                         color: isFuture
-                            ? const Color(0xFF8E8E93).withAlpha(30)
+                            ? ClayTokens.clayDarkTextTertiary.withAlpha(50)
                             : isToday
                                 ? const Color(0xFF64D2FF)
                                 : const Color(0xFF0A84FF),
@@ -432,7 +405,7 @@ class _WeekChartState extends State<_WeekChart> {
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 10, fontWeight: FontWeight.w500,
-                    color: isToday ? const Color(0xFF64D2FF) : const Color(0xFF8E8E93),
+                    color: isToday ? const Color(0xFF64D2FF) : ClayTokens.clayDarkTextTertiary,
                   ),
                 ),
               );
@@ -456,30 +429,30 @@ class _StatRow extends StatelessWidget {
     return Row(
       children: [
         _StatCard(
-          icon: CupertinoIcons.info_circle,
-          iconBg: const Color(0xFFBF5AF2).withAlpha(25),
-          iconColor: const Color(0xFFD6A5FF),
+          icon: Icons.info_outline,
+          iconBg: ClayTokens.clayPrimaryLight.withAlpha(30),
+          iconColor: ClayTokens.clayPrimaryLight,
           valueWidget: weight != null
-              ? AnimatedCountUp(target: (weight is int ? weight : (weight as double).round()), style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: Color(0xFFFFFFFF)))
-              : const Text('--', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: Color(0xFFFFFFFF))),
+              ? AnimatedCountUp(target: (weight is int ? weight : (weight as double).round()), style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: ClayTokens.clayDarkTextPrimary))
+              : Text('--', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: ClayTokens.clayDarkTextPrimary)),
           label: 'kg \u00b7 Weight',
         ),
         const SizedBox(width: 8),
         _StatCard(
-          icon: CupertinoIcons.gear,
-          iconBg: const Color(0xFF0A84FF).withAlpha(25),
+          icon: Icons.settings_outlined,
+          iconBg: const Color(0xFF0A84FF).withAlpha(30),
           iconColor: const Color(0xFF0A84FF),
           valueWidget: height != null
-              ? AnimatedCountUp(target: (height is int ? height : (height as double).round()), style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: Color(0xFFFFFFFF)))
-              : const Text('--', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: Color(0xFFFFFFFF))),
+              ? AnimatedCountUp(target: (height is int ? height : (height as double).round()), style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: ClayTokens.clayDarkTextPrimary))
+              : Text('--', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: ClayTokens.clayDarkTextPrimary)),
           label: 'cm \u00b7 Height',
         ),
         const SizedBox(width: 8),
         _StatCard(
-          icon: CupertinoIcons.flag,
-          iconBg: const Color(0xFF30D158).withAlpha(25),
-          iconColor: const Color(0xFF30D158),
-          valueWidget: Text(activeGoal?.split(' ').first ?? '--', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: Color(0xFFFFFFFF))),
+          icon: Icons.flag_outlined,
+          iconBg: ClayTokens.clayAccent.withAlpha(30),
+          iconColor: ClayTokens.clayAccent,
+          valueWidget: Text(activeGoal?.split(' ').first ?? '--', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: ClayTokens.clayDarkTextPrimary)),
           label: 'Goal',
         ),
       ],
@@ -502,8 +475,9 @@ class _StatCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Expanded(
-      child: PressableCard(
-        padding: const EdgeInsets.all(10),
+      child: ClayCard(
+        variant: ClayCardVariant.elevated,
+        padding: ClayCardPadding.small,
         child: Row(
           children: [
             Container(
@@ -519,9 +493,7 @@ class _StatCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 valueWidget,
-                Text(label, style: const TextStyle(
-                  fontSize: 9, color: Color(0xFF636366),
-                )),
+                Text(label, style: TextStyle(fontSize: 9, color: ClayTokens.clayDarkTextTertiary)),
               ],
             ),
           ],
@@ -541,103 +513,48 @@ class _TrainerCard extends StatelessWidget {
     final name = trainer['full_name'] as String? ?? 'Your Trainer';
     final initials = name.split(' ').map((n) => n[0]).take(2).join();
 
-    return Container(
-      decoration: BoxDecoration(
-        color: const Color(0xFF1C1C1E),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFF38383A).withAlpha(100)),
-      ),
-      padding: const EdgeInsets.all(13),
+    return ClayCard(
+      variant: ClayCardVariant.outlined,
+      padding: ClayCardPadding.medium,
       child: Column(
         children: [
           Row(
             children: [
-              Stack(
-                children: [
-                  Container(
-                    width: 44, height: 44,
-                    decoration: const BoxDecoration(
-                      shape: BoxShape.circle,
-                      gradient: LinearGradient(
-                        colors: [Color(0xFFBF5AF2), Color(0xFFD6A5FF)],
-                      ),
-                    ),
-                    alignment: Alignment.center,
-                    child: Text(initials, style: const TextStyle(
-                      color: Colors.white, fontSize: 12, fontWeight: FontWeight.w700,
-                    )),
-                  ),
-                  Positioned(
-                    right: 0, bottom: 0,
-                    child: Container(
-                      width: 11, height: 11,
-                      decoration: const BoxDecoration(
-                        color: Color(0xFF30D158),
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                  ),
-                ],
+              ClayAvatar(
+                initials: initials,
+                size: ClayAvatarSize.md,
+                showOnlineIndicator: true,
+                isOnline: true,
+                onlineColor: ClayTokens.clayAccent,
               ),
               const SizedBox(width: 10),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(name, style: const TextStyle(
-                      fontSize: 13, fontWeight: FontWeight.w700, color: Color(0xFFFFFFFF),
-                    )),
+                    Text(name, style: ClayTokens.titleMedium.copyWith(color: ClayTokens.clayDarkTextPrimary)),
                     const SizedBox(height: 1),
-                    const Text('Your Trainer', style: TextStyle(
-                      fontSize: 11, color: Color(0xFF8E8E93),
-                    )),
+                    Text('Your Trainer', style: ClayTokens.bodySmall.copyWith(color: ClayTokens.clayDarkTextTertiary)),
                     const SizedBox(height: 3),
-                    const Row(
-                      children: [_StarRow()],
-                    ),
+                    const _StarRow(),
                   ],
                 ),
               ),
-              GestureDetector(
-                onTap: () => context.go('/member/chat'),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-                  decoration: const BoxDecoration(
-                    color: Color(0xFF0A84FF),
-                    borderRadius: BorderRadius.all(Radius.circular(20)),
-                  ),
-                  child: const Text('Message', style: TextStyle(
-                    color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700,
-                  )),
-                ),
+              ClayButton(
+                label: 'Message',
+                onPressed: () => context.go('/member/chat'),
+                size: ClayButtonSize.small,
+                style: ClayButtonStyle.primary,
               ),
             ],
           ),
           const SizedBox(height: 10),
-          Semantics(
-            label: 'Tap to send a message to your trainer',
-            child: GestureDetector(
-              onTap: () => context.go('/member/chat'),
-              child: Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(vertical: 8),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF0A84FF).withAlpha(15),
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: const Color(0xFF0A84FF).withAlpha(30)),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(CupertinoIcons.chat_bubble_2_fill, color: Color(0xFF64B5FF), size: 13),
-                    const SizedBox(width: 5),
-                    Text('Ask a question', style: const TextStyle(
-                      fontSize: 11, color: Color(0xFF64B5FF), fontWeight: FontWeight.w600,
-                    )),
-                  ],
-                ),
-              ),
-            ),
+          ClayButton(
+            label: 'Ask a question',
+            onPressed: () => context.go('/member/chat'),
+            style: ClayButtonStyle.ghost,
+            fullWidth: true,
+            size: ClayButtonSize.small,
           ),
         ],
       ),
@@ -653,7 +570,7 @@ class _StarRow extends StatelessWidget {
     return Row(
       children: List.generate(5, (i) {
         return Icon(
-          i < 4 ? CupertinoIcons.star_fill : CupertinoIcons.star_lefthalf_fill,
+          i < 4 ? Icons.star : Icons.star_half,
           color: const Color(0xFFFF9500), size: 10,
         );
       }),
@@ -668,23 +585,23 @@ class _TodayProgress extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return PressableCard(
-      onTap: onTapWorkout,
-      padding: const EdgeInsets.all(14),
-      color: const Color(0xFF2C2C2E),
+    return ClayCard(
+      variant: ClayCardVariant.outlined,
+      padding: ClayCardPadding.medium,
+      backgroundColor: ClayTokens.clayDarkCard,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              const Icon(CupertinoIcons.arrow_up_right, color: Color(0xFFD6A5FF), size: 13),
+              Icon(Icons.arrow_upward, color: ClayTokens.clayPrimaryLight, size: 13),
               const SizedBox(width: 5),
-              Text("Today's Progress", style: Theme.of(context).textTheme.labelLarge?.copyWith(fontSize: 11)),
+              Text("Today's Progress", style: ClayTokens.labelLarge.copyWith(fontSize: 11)),
             ],
           ),
           const SizedBox(height: 10),
           _ProgressBarRow(
-            icon: CupertinoIcons.flame,
+            icon: Icons.local_fire_department,
             iconColor: const Color(0xFFFF453A),
             label: 'Calories Burned',
             value: '0 / 500 kcal',
@@ -693,12 +610,12 @@ class _TodayProgress extends StatelessWidget {
           ),
           const SizedBox(height: 13),
           _ProgressBarRow(
-            icon: CupertinoIcons.clock,
-            iconColor: const Color(0xFFBF5AF2),
+            icon: Icons.access_time,
+            iconColor: ClayTokens.clayPrimaryLight,
             label: 'Workout Time',
             value: '0 / 60 min',
             progress: 0.0,
-            barColor: const Color(0xFFBF5AF2),
+            barColor: ClayTokens.clayPrimaryLight,
           ),
         ],
       ),
@@ -730,14 +647,10 @@ class _ProgressBarRow extends StatelessWidget {
               children: [
                 Icon(icon, size: 13, color: iconColor),
                 const SizedBox(width: 4),
-                Text(label, style: const TextStyle(
-                  fontSize: 11, color: Color(0xFF636366),
-                )),
+                Text(label, style: TextStyle(fontSize: 11, color: ClayTokens.clayDarkTextTertiary)),
               ],
             ),
-            Text(value, style: TextStyle(
-              fontSize: 11, fontWeight: FontWeight.w700, color: barColor,
-            )),
+            Text(value, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: barColor)),
           ],
         ),
         const SizedBox(height: 5),
@@ -747,7 +660,7 @@ class _ProgressBarRow extends StatelessWidget {
             height: 4,
             child: LinearProgressIndicator(
               value: progress,
-              backgroundColor: const Color(0xFF38383A),
+              backgroundColor: ClayTokens.clayDarkBorder,
               valueColor: AlwaysStoppedAnimation(barColor),
             ),
           ),
@@ -767,29 +680,25 @@ class _QuickLogRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Expanded(
-          child: _QuickCard(
-            icon: CupertinoIcons.person,
-            title: 'Log Workout',
-            subtitle: 'Track your exercise',
-            onTap: onLogWorkout,
-          ),
-        ),
+        Expanded(child: _QuickCard(
+          icon: Icons.fitness_center,
+          title: 'Log Workout',
+          subtitle: 'Track your exercise',
+          onTap: onLogWorkout,
+        )),
         const SizedBox(width: 10),
-        Expanded(
-          child: _QuickCard(
-            icon: CupertinoIcons.gear,
-            title: 'Log Meal',
-            subtitle: 'Track your nutrition',
-            onTap: onLogMeal,
-          ),
-        ),
+        Expanded(child: _QuickCard(
+          icon: Icons.restaurant,
+          title: 'Log Meal',
+          subtitle: 'Track your nutrition',
+          onTap: onLogMeal,
+        )),
       ],
     );
   }
 }
 
-class _QuickCard extends StatefulWidget {
+class _QuickCard extends StatelessWidget {
   final IconData icon;
   final String title;
   final String subtitle;
@@ -801,75 +710,29 @@ class _QuickCard extends StatefulWidget {
   });
 
   @override
-  State<_QuickCard> createState() => _QuickCardState();
-}
-
-class _QuickCardState extends State<_QuickCard> with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-  late Animation<double> _scaleAnim;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(vsync: this, duration: const Duration(milliseconds: 120));
-    _scaleAnim = Tween<double>(begin: 1.0, end: 0.96).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
-    );
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _scaleAnim,
-      builder: (_, __) {
-        return Transform.scale(
-          scale: _scaleAnim.value,
-          child: GestureDetector(
-            onTapDown: (_) => _controller.forward(),
-            onTapUp: (_) => _controller.reverse(),
-            onTapCancel: () => _controller.reverse(),
-            onTap: widget.onTap,
-            child: Semantics(
-              label: '${widget.title} — ${widget.subtitle}',
-              child: Container(
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF0A84FF).withAlpha(15),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: const Color(0xFF0A84FF).withAlpha(40)),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                      width: 38, height: 38,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF0A84FF),
-                        borderRadius: BorderRadius.circular(11),
-                      ),
-                      child: Icon(widget.icon, color: Colors.white, size: 18),
-                    ),
-                    const SizedBox(height: 10),
-                    Text(widget.title, style: const TextStyle(
-                      fontSize: 13, fontWeight: FontWeight.w700, color: Color(0xFFFFFFFF),
-                    )),
-                    const SizedBox(height: 2),
-                    Text(widget.subtitle, style: const TextStyle(
-                      fontSize: 10, color: Color(0xFF8E8E93),
-                    )),
-                  ],
-                ),
-              ),
+    return ClayCard(
+      variant: ClayCardVariant.elevated,
+      padding: ClayCardPadding.medium,
+      onTap: onTap,
+      backgroundColor: const Color(0xFF0A84FF).withAlpha(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 38, height: 38,
+            decoration: BoxDecoration(
+              color: const Color(0xFF0A84FF),
+              borderRadius: BorderRadius.circular(11),
             ),
+            child: Icon(icon, color: Colors.white, size: 18),
           ),
-        );
-      },
+          const SizedBox(height: 10),
+          Text(title, style: ClayTokens.titleMedium.copyWith(color: ClayTokens.clayDarkTextPrimary)),
+          const SizedBox(height: 2),
+          Text(subtitle, style: ClayTokens.bodySmall.copyWith(color: ClayTokens.clayDarkTextTertiary)),
+        ],
+      ),
     );
   }
 }

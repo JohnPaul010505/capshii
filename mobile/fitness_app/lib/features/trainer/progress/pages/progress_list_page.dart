@@ -3,10 +3,9 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared/services/supabase_client.dart';
-import '../../../../app/cupertino_theme.dart';
+import '../../../../app/design_tokens.dart';
 import '../../../shared/widgets/pressable.dart';
 import '../../../shared/widgets/skeleton.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 final assignedMembersWithStatsProvider = FutureProvider.autoDispose<List<Map<String, dynamic>>>((ref) async {
   final client = SupabaseClientService().client;
@@ -82,24 +81,24 @@ class ProgressListPage extends ConsumerWidget {
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
               child: Text('Members',
-                style: sfText(fontSize: 20, fontWeight: FontWeight.w600, color: CupertinoAppColors.textPrimary, letterSpacing: 0.38)),
+                style: ClayTokens.headlineMedium.copyWith(fontWeight: FontWeight.w600, color: ClayTokens.clayDarkTextPrimary, letterSpacing: 0.38)),
             ),
             const SizedBox(height: 8),
             Container(
               margin: const EdgeInsets.symmetric(horizontal: 14),
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: CupertinoAppColors.primaryBlue.withAlpha(12),
+                color: ClayTokens.clayPrimary.withAlpha(12),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: CupertinoAppColors.primaryBlue.withAlpha(30)),
+                border: Border.all(color: ClayTokens.clayPrimary.withAlpha(30)),
               ),
               child: Row(
                 children: [
-                  const Icon(CupertinoIcons.info, color: CupertinoAppColors.blueLight, size: 14),
+                  Icon(CupertinoIcons.info, color: ClayTokens.clayPrimaryLight, size: 14),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text('Tap any member to view their workouts, meals, and progress charts.',
-                      style: sfText(fontSize: 13, fontWeight: FontWeight.w400, color: CupertinoAppColors.textTertiary, letterSpacing: -0.08)),
+                      style: ClayTokens.bodySmall.copyWith(fontSize: 13, fontWeight: FontWeight.w400, color: ClayTokens.clayDarkTextTertiary, letterSpacing: -0.08)),
                   ),
                 ],
               ),
@@ -113,9 +112,9 @@ class ProgressListPage extends ConsumerWidget {
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Icon(CupertinoIcons.person_2, color: CupertinoAppColors.textTertiary, size: 48),
+                          Icon(CupertinoIcons.person_2, color: ClayTokens.clayDarkTextTertiary, size: 48),
                           const SizedBox(height: 12),
-                          Text('No assigned members yet', style: sfText(fontSize: 13, fontWeight: FontWeight.w400, color: CupertinoAppColors.textQuaternary, letterSpacing: -0.08)),
+                          Text('No assigned members yet', style: ClayTokens.bodySmall.copyWith(fontSize: 13, fontWeight: FontWeight.w400, color: ClayTokens.clayDarkTextTertiary, letterSpacing: -0.08)),
                         ],
                       ),
                     );
@@ -138,8 +137,8 @@ class ProgressListPage extends ConsumerWidget {
                           onTap: () => context.push('/trainer/members/${m['id']}'),
                           padding: const EdgeInsets.all(12),
                           margin: const EdgeInsets.only(bottom: 8),
-                          color: CupertinoAppColors.groupedBackground,
-                          border: Border.all(color: CupertinoAppColors.separator.withAlpha(100)),
+                          color: ClayTokens.clayDarkSurface,
+                          border: Border.all(color: ClayTokens.clayDarkBorder.withAlpha(100)),
                           borderRadius: BorderRadius.circular(16),
                           child: Row(
                             children: [
@@ -150,27 +149,27 @@ class ProgressListPage extends ConsumerWidget {
                                   shape: BoxShape.circle,
                                 ),
                                 alignment: Alignment.center,
-                                child: Text(initials, style: sfText(
-                                  color: CupertinoAppColors.textPrimary, fontSize: 13, fontWeight: FontWeight.w600)),
+                                child: Text(initials, style: ClayTokens.bodySmall.copyWith(
+                                  color: ClayTokens.clayDarkTextPrimary, fontSize: 13, fontWeight: FontWeight.w600)),
                               ),
                               const SizedBox(width: 10),
                               Expanded(
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text(name, style: sfText(
-                                      fontSize: 15, fontWeight: FontWeight.w500, color: CupertinoAppColors.textPrimary, letterSpacing: -0.24)),
+                                    Text(name, style: ClayTokens.titleLarge.copyWith(
+                                      fontSize: 15, fontWeight: FontWeight.w500, color: ClayTokens.clayDarkTextPrimary, letterSpacing: -0.24)),
                                     if (goal != null)
-                                      Text(goal, style: sfText(
-                                        fontSize: 13, fontWeight: FontWeight.w400, color: CupertinoAppColors.textTertiary, letterSpacing: -0.08)),
+                                      Text(goal, style: ClayTokens.bodySmall.copyWith(
+                                        fontSize: 13, fontWeight: FontWeight.w400, color: ClayTokens.clayDarkTextTertiary, letterSpacing: -0.08)),
                                     if (weight != null || height != null)
                                       Text(
                                         '${weight != null ? '$weight kg' : ''}${weight != null && height != null ? '  ·  ' : ''}${height != null ? '$height cm' : ''}',
-                                        style: sfText(fontSize: 11, fontWeight: FontWeight.w500, color: CupertinoAppColors.textTertiary, letterSpacing: 0.06)),
+                                        style: ClayTokens.labelMedium.copyWith(fontSize: 11, fontWeight: FontWeight.w500, color: ClayTokens.clayDarkTextTertiary, letterSpacing: 0.06)),
                                   ],
                                 ),
                               ),
-                              const Icon(CupertinoIcons.chevron_forward, color: CupertinoAppColors.textTertiary, size: 18),
+                              Icon(CupertinoIcons.chevron_forward, color: ClayTokens.clayDarkTextTertiary, size: 18),
                             ],
                           ),
                         ),
@@ -190,7 +189,7 @@ class ProgressListPage extends ConsumerWidget {
                     ],
                   ),
                 ),
-                error: (e, _) => Center(child: Text('Error: $e', style: sfText(fontSize: 12, fontWeight: FontWeight.w400, color: CupertinoAppColors.textQuaternary))),
+                error: (e, _) => Center(child: Text('Error: $e', style: ClayTokens.labelMedium.copyWith(fontWeight: FontWeight.w400, color: ClayTokens.clayDarkTextTertiary))),
               ),
             ),
           ],

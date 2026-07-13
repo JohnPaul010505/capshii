@@ -5,7 +5,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:shared/services/supabase_client.dart';
-import '../../../../app/theme.dart';
 import '../../../shared/widgets/pressable.dart';
 import '../../../shared/widgets/animations.dart';
 
@@ -247,7 +246,7 @@ class _MealLogPageState extends ConsumerState<MealLogPage> {
           const Text('Log Meal', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: Color(0xFFFFFFFF))),
           const SizedBox(height: 10),
           DropdownButtonFormField<String>(
-            value: _mealType,
+            initialValue: _mealType,
             items: mealTypes.map((t) => DropdownMenuItem(
               value: t,
               child: Text(t[0].toUpperCase() + t.substring(1), style: const TextStyle(color: Color(0xFFFFFFFF), fontSize: 13)),

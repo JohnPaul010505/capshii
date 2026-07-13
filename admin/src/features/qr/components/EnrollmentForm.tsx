@@ -5,6 +5,8 @@ interface EnrollmentFormData {
   dateOfBirth: string
   gender: string
   address: string
+  emergencyContactName: string
+  emergencyContactPhone: string
 }
 
 interface EnrollmentFormProps {
@@ -24,15 +26,27 @@ const emptyForm: EnrollmentFormData = {
   dateOfBirth: '',
   gender: '',
   address: '',
+  emergencyContactName: '',
+  emergencyContactPhone: '',
 }
 
 const inputCls = 'w-full px-3 py-2.5 bg-[#1C1C35] border border-[#2A2A45] rounded-lg text-sm text-[#ECECFC] focus:outline-none focus:ring-2 focus:ring-[#7C3AED]/50 focus:border-[#7C3AED] placeholder:text-[#55557A]'
+const inputErrorCls = 'w-full px-3 py-2.5 bg-[#1C1C35] border border-[#EF4444] rounded-lg text-sm text-[#ECECFC] focus:outline-none focus:ring-2 focus:ring-[#EF4444]/50 focus:border-[#EF4444] placeholder:text-[#55557A]'
 const labelCls = 'block text-sm font-medium text-[#B4B4D0] mb-1'
+
+function getPhoneError(v: string): string | null {
+  if (!v) return null
+  const digits = v.replace(/\D/g, '')
+  if (digits.length !== 11) return 'Phone number must be exactly 11 digits'
+  return null
+}
 
 export { emptyForm }
 export type { EnrollmentFormData }
 
 export default function EnrollmentForm({ data, onChange, includePassword, password, onPasswordChange, confirmPassword, onConfirmPasswordChange }: EnrollmentFormProps) {
+  const phoneError = getPhoneError(data.phone)
+  const emergencyPhoneError = getPhoneError(data.emergencyContactPhone)
   const set = (field: keyof EnrollmentFormData) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     onChange({ ...data, [field]: e.target.value })
   }
@@ -50,7 +64,8 @@ export default function EnrollmentForm({ data, onChange, includePassword, passwo
         </div>
         <div>
           <label className={labelCls}>Phone</label>
-          <input value={data.phone} onChange={set('phone')} className={inputCls} placeholder="Enter phone number" />
+          <input value={data.phone} onChange={set('phone')} className={phoneError ? inputErrorCls : inputCls} placeholder="09123456789" />
+          {phoneError && <p className="text-xs text-[#EF4444] mt-1">{phoneError}</p>}
         </div>
         <div>
           <label className={labelCls}>Date of Birth</label>
@@ -68,6 +83,21 @@ export default function EnrollmentForm({ data, onChange, includePassword, passwo
         <div className="md:col-span-2">
           <label className={labelCls}>Address</label>
           <textarea value={data.address} onChange={set('address')} className={inputCls} rows={2} placeholder="Enter address" />
+        </div>
+      </div>
+
+      <div className="border-t border-[#2A2A45] pt-4">
+        <h4 className="text-sm font-semibold text-[#ECECFC] mb-3">Emergency Contact</h4>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className={labelCls}>Contact Name</label>
+            <input value={data.emergencyContactName} onChange={set('emergencyContactName')} className={inputCls} placeholder="Emergency contact name" />
+          </div>
+          <div>
+            <label className={labelCls}>Contact Phone</label>
+            <input value={data.emergencyContactPhone} onChange={set('emergencyContactPhone')} className={emergencyPhoneError ? inputErrorCls : inputCls} placeholder="09123456789" />
+            {emergencyPhoneError && <p className="text-xs text-[#EF4444] mt-1">{emergencyPhoneError}</p>}
+          </div>
         </div>
       </div>
 

@@ -1,10 +1,8 @@
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:shared/services/supabase_client.dart';
-import '../../../../app/cupertino_theme.dart';
+import '../../../../app/design_tokens.dart';
 
 final measurementsProvider = FutureProvider<List<Map<String, dynamic>>>((ref) async {
   final userId = SupabaseClientService().client.auth.currentUser!.id;
@@ -14,7 +12,7 @@ final measurementsProvider = FutureProvider<List<Map<String, dynamic>>>((ref) as
       .select()
       .eq('member_id', userId)
       .order('measured_at', ascending: false);
-  return response as List<Map<String, dynamic>>;
+  return response;
 });
 
 class MeasurementsPage extends ConsumerStatefulWidget {
@@ -72,7 +70,7 @@ class _MeasurementsPageState extends ConsumerState<MeasurementsPage> {
     final measurementsAsync = ref.watch(measurementsProvider);
 
     return CupertinoPageScaffold(
-      backgroundColor: CupertinoAppColors.background,
+      backgroundColor: ClayTokens.clayDarkBase,
       child: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -83,9 +81,9 @@ class _MeasurementsPageState extends ConsumerState<MeasurementsPage> {
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                 children: [
                   Container(
-                    decoration: const BoxDecoration(
-                      color: CupertinoAppColors.groupedBackground,
-                      borderRadius: BorderRadius.all(Radius.circular(16)),
+                    decoration: BoxDecoration(
+                      color: ClayTokens.clayDarkSurface,
+                      borderRadius: const BorderRadius.all(Radius.circular(16)),
                     ),
                     child: Padding(
                       padding: const EdgeInsets.all(16),
@@ -94,10 +92,10 @@ class _MeasurementsPageState extends ConsumerState<MeasurementsPage> {
                         children: [
                           Text(
                             'Record New',
-                            style: sfText(
+                            style: ClayTokens.titleLarge.copyWith(
                               fontSize: 17,
                               fontWeight: FontWeight.w600,
-                              color: CupertinoAppColors.textPrimary,
+                              color: ClayTokens.clayDarkTextPrimary,
                             ),
                           ),
                           const SizedBox(height: 12),
@@ -117,17 +115,17 @@ class _MeasurementsPageState extends ConsumerState<MeasurementsPage> {
                             width: double.infinity,
                             height: 44,
                             child: CupertinoButton(
-                              color: CupertinoAppColors.primaryBlue,
+                              color: ClayTokens.clayPrimary,
                               borderRadius: BorderRadius.circular(12),
                               onPressed: _saving ? null : _save,
                               child: _saving
-                                  ? const CupertinoActivityIndicator(color: CupertinoAppColors.textPrimary)
+                                  ? CupertinoActivityIndicator(color: ClayTokens.clayDarkTextPrimary)
                                   : Text(
                                       'Save',
-                                      style: sfText(
+                                      style: ClayTokens.titleLarge.copyWith(
                                         fontSize: 17,
                                         fontWeight: FontWeight.w600,
-                                        color: CupertinoAppColors.textPrimary,
+                                        color: ClayTokens.clayDarkTextPrimary,
                                       ),
                                     ),
                             ),
@@ -141,19 +139,18 @@ class _MeasurementsPageState extends ConsumerState<MeasurementsPage> {
                     padding: const EdgeInsets.only(left: 4, bottom: 8),
                     child: Text(
                       'History',
-                      style: sfText(
-                        fontSize: 20,
+                      style: ClayTokens.headlineMedium.copyWith(
                         fontWeight: FontWeight.w700,
-                        color: CupertinoAppColors.textPrimary,
+                        color: ClayTokens.clayDarkTextPrimary,
                         letterSpacing: -0.36,
                       ),
                     ),
                   ),
                   measurementsAsync.when(
                     data: (measurements) => Container(
-                      decoration: const BoxDecoration(
-                        color: CupertinoAppColors.groupedBackground,
-                        borderRadius: BorderRadius.all(Radius.circular(16)),
+                      decoration: BoxDecoration(
+                        color: ClayTokens.clayDarkSurface,
+                        borderRadius: const BorderRadius.all(Radius.circular(16)),
                       ),
                       child: Column(
                         children: measurements.asMap().entries.map((entry) {
@@ -177,13 +174,7 @@ class _MeasurementsPageState extends ConsumerState<MeasurementsPage> {
                                 },
                               ),
                               if (!isLast)
-                                const Divider(
-                                  color: CupertinoAppColors.separator,
-                                  height: 0.5,
-                                  thickness: 0.5,
-                                  indent: 16,
-                                  endIndent: 16,
-                                ),
+                                const SizedBox(height: 0.5),
                             ],
                           );
                         }).toList(),
@@ -194,7 +185,7 @@ class _MeasurementsPageState extends ConsumerState<MeasurementsPage> {
                       padding: const EdgeInsets.all(16),
                       child: Text(
                         'Error: $e',
-                        style: sfText(color: CupertinoAppColors.red),
+                        style: ClayTokens.bodyMedium.copyWith(color: ClayTokens.clayError),
                       ),
                     ),
                   ),
@@ -222,19 +213,19 @@ class _MeasurementsPageState extends ConsumerState<MeasurementsPage> {
               children: [
                 Text(
                   title,
-                  style: sfText(
+                  style: ClayTokens.titleLarge.copyWith(
                     fontSize: 17,
                     fontWeight: FontWeight.w500,
-                    color: CupertinoAppColors.textPrimary,
+                    color: ClayTokens.clayDarkTextPrimary,
                     letterSpacing: -0.41,
                   ),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   subtitle,
-                  style: sfText(
+                  style: ClayTokens.titleMedium.copyWith(
                     fontSize: 15,
-                    color: CupertinoAppColors.textTertiary,
+                    color: ClayTokens.clayDarkTextTertiary,
                     letterSpacing: -0.24,
                   ),
                 ),
@@ -245,7 +236,7 @@ class _MeasurementsPageState extends ConsumerState<MeasurementsPage> {
         CupertinoButton(
           padding: const EdgeInsets.all(16),
           onPressed: onDelete,
-          child: Icon(CupertinoIcons.trash, color: CupertinoAppColors.red, size: 20),
+          child: Icon(CupertinoIcons.trash, color: ClayTokens.clayError, size: 20),
         ),
       ],
     );
@@ -254,29 +245,24 @@ class _MeasurementsPageState extends ConsumerState<MeasurementsPage> {
   Widget _buildHeader(String title) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-      decoration: BoxDecoration(
-        border: Border(
-          bottom: BorderSide(color: CupertinoAppColors.separator, width: 0.5),
-        ),
-      ),
       child: Row(
         children: [
           CupertinoButton(
             padding: EdgeInsets.zero,
             onPressed: () => context.pop(),
-            child: const Icon(
+            child: Icon(
               CupertinoIcons.back,
-              color: CupertinoAppColors.primaryBlue,
+              color: ClayTokens.clayPrimary,
             ),
           ),
           Expanded(
             child: Text(
               title,
               textAlign: TextAlign.center,
-              style: sfText(
+              style: ClayTokens.titleLarge.copyWith(
                 fontSize: 17,
                 fontWeight: FontWeight.w600,
-                color: CupertinoAppColors.textPrimary,
+                color: ClayTokens.clayDarkTextPrimary,
                 letterSpacing: -0.41,
               ),
             ),
@@ -288,24 +274,19 @@ class _MeasurementsPageState extends ConsumerState<MeasurementsPage> {
   }
 
   Widget _buildField(TextEditingController controller, String label, TextInputType keyboardType, {int maxLines = 1}) {
-    return Container(
+    return CupertinoTextField(
+      controller: controller,
+      placeholder: label,
+      placeholderStyle: ClayTokens.bodyMedium.copyWith(color: ClayTokens.clayDarkTextTertiary),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
       decoration: BoxDecoration(
-        color: CupertinoAppColors.cardElevated,
+        color: ClayTokens.clayDarkSurfaceElevated,
         borderRadius: BorderRadius.circular(10),
       ),
-      child: TextField(
-        controller: controller,
-        decoration: InputDecoration(
-          labelText: label,
-          labelStyle: sfText(color: CupertinoAppColors.textTertiary),
-          border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-        ),
-        keyboardType: keyboardType,
-        maxLines: maxLines,
-        cursorColor: CupertinoAppColors.primaryBlue,
-        style: sfText(color: CupertinoAppColors.textPrimary),
-      ),
+      keyboardType: keyboardType,
+      maxLines: maxLines,
+      cursorColor: ClayTokens.clayPrimary,
+      style: ClayTokens.bodyMedium.copyWith(color: ClayTokens.clayDarkTextPrimary),
     );
   }
 }

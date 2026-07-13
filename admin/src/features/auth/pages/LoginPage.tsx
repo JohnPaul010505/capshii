@@ -21,13 +21,13 @@ function FloatingInput({ label, type, value, onChange }: {
         onChange={e => onChange(e.target.value)}
         onFocus={() => setFocused(true)}
         onBlur={() => setFocused(false)}
-        className="w-full px-3 pt-5 pb-2 bg-[#1C1C35] border border-[#2A2A45] rounded-lg text-[#ECECFC] text-sm focus:outline-none focus:ring-2 focus:ring-[#7C3AED]/50 focus:border-[#7C3AED]"
+        className="w-full px-3 pt-5 pb-2 bg-[#1C1C35] border border-[#353555] rounded-lg text-[#ECECFC] text-sm focus:outline-none focus:ring-2 focus:ring-[#7C3AED]/50 focus:border-[#7C3AED]"
         required
       />
       <span
         className={`absolute left-3 transition-all duration-180 ease-in-out pointer-events-none ${
           isFloating
-            ? 'text-[11px] -top-[7px] px-1 bg-[#1C1C35] text-[#55557A]'
+            ? 'text-[11px] -top-[7px] px-1 bg-[#1C1C35] text-white'
             : 'text-sm top-[18px] text-[#55557A]'
         }`}
       >

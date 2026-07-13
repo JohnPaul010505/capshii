@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../app/cupertino_theme.dart';
+import '../../../app/design_tokens.dart';
 import 'nav_icons.dart';
 
 class GlassNavItem {
@@ -64,10 +64,10 @@ class _GlassBottomNavState extends State<GlassBottomNav>
         child: Container(
           height: 64,
           decoration: BoxDecoration(
-            color: const Color(0xFF1C1C1E),
+            color: ClayTokens.clayDarkSurface,
             borderRadius: BorderRadius.circular(40),
             border: Border.all(
-              color: CupertinoAppColors.separator.withAlpha(50),
+              color: ClayTokens.clayDarkBorder.withAlpha(100),
               width: 0.5,
             ),
           ),
@@ -137,8 +137,8 @@ class _GlassBottomNavState extends State<GlassBottomNav>
                                           child: Container(
                                             width: 28,
                                             height: 28,
-                                            decoration: const BoxDecoration(
-                                              color: CupertinoAppColors.purple,
+                                            decoration: BoxDecoration(
+                                              color: ClayTokens.clayPrimary,
                                               shape: BoxShape.circle,
                                             ),
                                           ),
@@ -148,9 +148,9 @@ class _GlassBottomNavState extends State<GlassBottomNav>
                                           isActive: isActive,
                                           size: 20,
                                           activeColor:
-                                              CupertinoAppColors.textPrimary,
+                                              ClayTokens.clayDarkTextPrimary,
                                           inactiveColor:
-                                              CupertinoAppColors.textTertiary,
+                                              ClayTokens.clayDarkTextTertiary,
                                         ),
                                       ],
                                     ),
@@ -178,12 +178,11 @@ class _GlassBottomNavState extends State<GlassBottomNav>
                                           child: Text(
                                             widget.items[i].label,
                                             overflow: TextOverflow.ellipsis,
-                                            style: const TextStyle(
+                                            style: TextStyle(
                                               fontSize: 13,
                                               fontWeight: FontWeight.w600,
                                               color:
-                                                  CupertinoAppColors
-                                                      .textPrimary,
+                                                  ClayTokens.clayDarkTextPrimary,
                                             ),
                                           ),
                                         ),
@@ -202,7 +201,7 @@ class _GlassBottomNavState extends State<GlassBottomNav>
                               curve: Curves.easeInOut,
                               height: isActive ? 2.5 : 0,
                               decoration: BoxDecoration(
-                                color: CupertinoAppColors.purple,
+                                color: ClayTokens.clayPrimary,
                                 borderRadius: BorderRadius.circular(1),
                               ),
                             ),

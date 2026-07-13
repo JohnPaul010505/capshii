@@ -3,10 +3,9 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared/providers/auth_provider.dart';
 import 'package:shared/services/supabase_client.dart';
-import '../../../../app/cupertino_theme.dart';
+import '../../../../app/design_tokens.dart';
 import '../../../shared/widgets/pressable.dart';
 import '../../../shared/widgets/skeleton.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 final trainerProfileProvider = FutureProvider.autoDispose<Map<String, dynamic>>((ref) async {
   final userId = SupabaseClientService().client.auth.currentUser!.id;
@@ -48,53 +47,53 @@ class ProfilePage extends ConsumerWidget {
                         children: [
                           Container(
                             width: 72, height: 72,
-                            decoration: const BoxDecoration(
+                            decoration: BoxDecoration(
                               shape: BoxShape.circle,
-                              color: CupertinoAppColors.cardElevated,
+                              color: ClayTokens.clayDarkSurfaceElevated,
                             ),
                             alignment: Alignment.center,
-                            child: Text(initials, style: sfText(
-                              color: CupertinoAppColors.textPrimary, fontSize: 22, fontWeight: FontWeight.w600)),
+                            child: Text(initials, style: ClayTokens.headlineMedium.copyWith(
+                              fontSize: 22, color: ClayTokens.clayDarkTextPrimary, fontWeight: FontWeight.w600)),
                           ),
                           Positioned(
                             right: 0, bottom: 0,
                             child: Container(
                               width: 22, height: 22,
-                              decoration: const BoxDecoration(
-                                color: CupertinoAppColors.primaryBlue,
+                              decoration: BoxDecoration(
+                                color: ClayTokens.clayPrimary,
                                 shape: BoxShape.circle,
                               ),
-                              child: const Icon(CupertinoIcons.person, color: CupertinoAppColors.textPrimary, size: 10),
+                              child: Icon(CupertinoIcons.person, color: ClayTokens.clayDarkTextPrimary, size: 10),
                             ),
                           ),
                         ],
                       ),
                       const SizedBox(height: 12),
-                      Text(name, style: sfText(fontSize: 20, fontWeight: FontWeight.w600, color: CupertinoAppColors.textPrimary, letterSpacing: 0.38)),
+                      Text(name, style: ClayTokens.headlineMedium.copyWith(fontWeight: FontWeight.w600, color: ClayTokens.clayDarkTextPrimary, letterSpacing: 0.38)),
                       const SizedBox(height: 6),
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
-                        decoration: const BoxDecoration(
-                          color: CupertinoAppColors.primaryBlue,
-                          borderRadius: BorderRadius.all(Radius.circular(20)),
+                        decoration: BoxDecoration(
+                          color: ClayTokens.clayPrimary,
+                          borderRadius: const BorderRadius.all(Radius.circular(20)),
                         ),
                         child: Text('TRAINER',
-                          style: sfText(color: CupertinoAppColors.textPrimary, fontSize: 10, fontWeight: FontWeight.w600, letterSpacing: 0.8)),
+                          style: ClayTokens.labelSmall.copyWith(color: ClayTokens.clayDarkTextPrimary, fontWeight: FontWeight.w600, letterSpacing: 0.8)),
                       ),
                       const SizedBox(height: 8),
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 4),
                         decoration: BoxDecoration(
-                          color: CupertinoAppColors.groupedBackground,
+                          color: ClayTokens.clayDarkSurface,
                           borderRadius: BorderRadius.circular(20),
-                          border: Border.all(color: CupertinoAppColors.separator.withAlpha(100)),
+                          border: Border.all(color: ClayTokens.clayDarkBorder.withAlpha(100)),
                         ),
-                        child: const Row(
+                        child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(CupertinoIcons.bolt, color: CupertinoAppColors.textQuaternary, size: 12),
-                            SizedBox(width: 5),
-                            const Text('Strength & HIIT', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w400, color: CupertinoAppColors.textQuaternary)),
+                            Icon(CupertinoIcons.bolt, color: ClayTokens.clayDarkTextTertiary, size: 12),
+                            const SizedBox(width: 5),
+                            Text('Strength & HIIT', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w400, color: ClayTokens.clayDarkTextTertiary)),
                           ],
                         ),
                       ),
@@ -105,9 +104,9 @@ class ProfilePage extends ConsumerWidget {
                 // Info card 1
                 Container(
                   decoration: BoxDecoration(
-                    color: CupertinoAppColors.groupedBackground,
+                    color: ClayTokens.clayDarkSurface,
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: CupertinoAppColors.separator.withAlpha(100)),
+                    border: Border.all(color: ClayTokens.clayDarkBorder.withAlpha(100)),
                   ),
                   child: Column(
                     children: [
@@ -122,9 +121,9 @@ class ProfilePage extends ConsumerWidget {
                 // Info card 2 — Specialty & Availability
                 Container(
                   decoration: BoxDecoration(
-                    color: CupertinoAppColors.groupedBackground,
+                    color: ClayTokens.clayDarkSurface,
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: CupertinoAppColors.separator.withAlpha(100)),
+                    border: Border.all(color: ClayTokens.clayDarkBorder.withAlpha(100)),
                   ),
                   child: const Column(
                     children: [
@@ -138,16 +137,16 @@ class ProfilePage extends ConsumerWidget {
                   builder: (_, ref, __) => PressableCard(
                     onTap: () => ref.read(authProvider.notifier).signOut(),
                     padding: const EdgeInsets.symmetric(vertical: 13),
-                    color: CupertinoAppColors.red.withAlpha(15),
+                    color: ClayTokens.clayError.withAlpha(15),
                     borderRadius: BorderRadius.circular(13),
-                    border: Border.all(color: CupertinoAppColors.red.withAlpha(50)),
+                    border: Border.all(color: ClayTokens.clayError.withAlpha(50)),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Icon(CupertinoIcons.square_arrow_right, color: CupertinoAppColors.red, size: 16),
+                        Icon(CupertinoIcons.square_arrow_right, color: ClayTokens.clayError, size: 16),
                         const SizedBox(width: 8),
                         Text('Sign Out',
-                          style: sfText(color: CupertinoAppColors.red, fontSize: 14, fontWeight: FontWeight.w600, letterSpacing: -0.24)),
+                          style: ClayTokens.bodyMedium.copyWith(color: ClayTokens.clayError, fontSize: 14, fontWeight: FontWeight.w600, letterSpacing: -0.24)),
                       ],
                     ),
                   ),
@@ -173,7 +172,7 @@ class ProfilePage extends ConsumerWidget {
               ],
             ),
           ),
-          error: (e, _) => Center(child: Text('Error: $e', style: sfText(fontSize: 12, fontWeight: FontWeight.w400, color: CupertinoAppColors.textQuaternary))),
+          error: (e, _) => Center(child: Text('Error: $e', style: ClayTokens.labelMedium.copyWith(fontWeight: FontWeight.w400, color: ClayTokens.clayDarkTextTertiary))),
         ),
       ),
     );
@@ -193,16 +192,16 @@ class _InfoRow extends StatelessWidget {
       label: '$label: $value',
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-        decoration: const BoxDecoration(
-          border: Border(bottom: BorderSide(color: CupertinoAppColors.separator)),
+        decoration: BoxDecoration(
+          border: Border(bottom: BorderSide(color: ClayTokens.clayDarkBorder)),
         ),
         child: Row(
           children: [
-            Icon(icon, color: CupertinoAppColors.textTertiary, size: 16),
+            Icon(icon, color: ClayTokens.clayDarkTextTertiary, size: 16),
             const SizedBox(width: 10),
-            Text(label, style: sfText(fontSize: 13, fontWeight: FontWeight.w400, color: CupertinoAppColors.textTertiary, letterSpacing: -0.08)),
+            Text(label, style: ClayTokens.bodySmall.copyWith(fontSize: 13, fontWeight: FontWeight.w400, color: ClayTokens.clayDarkTextTertiary, letterSpacing: -0.08)),
             const Spacer(),
-            Text(value, style: sfText(fontSize: 13, fontWeight: FontWeight.w500, color: CupertinoAppColors.textPrimary, letterSpacing: -0.08)),
+            Text(value, style: ClayTokens.bodySmall.copyWith(fontSize: 13, fontWeight: FontWeight.w500, color: ClayTokens.clayDarkTextPrimary, letterSpacing: -0.08)),
           ],
         ),
       ),

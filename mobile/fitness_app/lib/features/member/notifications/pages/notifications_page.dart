@@ -1,10 +1,8 @@
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:shared/services/supabase_client.dart';
-import '../../../../app/cupertino_theme.dart';
+import '../../../../app/design_tokens.dart';
 
 final notificationsProvider = FutureProvider<List<Map<String, dynamic>>>((ref) async {
   final userId = SupabaseClientService().client.auth.currentUser!.id;
@@ -14,7 +12,7 @@ final notificationsProvider = FutureProvider<List<Map<String, dynamic>>>((ref) a
       .select()
       .eq('user_id', userId)
       .order('created_at', ascending: false);
-  return response as List<Map<String, dynamic>>;
+  return response;
 });
 
 class NotificationsPage extends ConsumerWidget {
@@ -25,7 +23,7 @@ class NotificationsPage extends ConsumerWidget {
     final notifAsync = ref.watch(notificationsProvider);
 
     return CupertinoPageScaffold(
-      backgroundColor: CupertinoAppColors.background,
+      backgroundColor: ClayTokens.clayDarkBase,
       child: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -35,19 +33,19 @@ class NotificationsPage extends ConsumerWidget {
               child: notifAsync.when(
                 data: (notifs) {
                   if (notifs.isEmpty) {
-                    return const Center(
+                    return Center(
                       child: Text(
                         'No notifications',
                         style: TextStyle(
                           fontSize: 17,
-                          color: CupertinoAppColors.textTertiary,
+                          color: ClayTokens.clayDarkTextTertiary,
                         ),
                       ),
                     );
                   }
                   return Container(
-                    decoration: const BoxDecoration(
-                      color: CupertinoAppColors.groupedBackground,
+                    decoration: BoxDecoration(
+                      color: ClayTokens.clayDarkSurface,
                     ),
                     child: ListView.builder(
                       itemCount: notifs.length,
@@ -62,12 +60,12 @@ class NotificationsPage extends ConsumerWidget {
                                   padding: const EdgeInsets.all(16),
                                   child: Icon(
                                     CupertinoIcons.bell,
-                                    color: CupertinoAppColors.primaryBlue,
+                                    color: ClayTokens.clayPrimary,
                                     size: 24,
                                   ),
                                 ),
                                 Expanded(
-                                  child: InkWell(
+                                  child: GestureDetector(
                                     onTap: () async {
                                       if (n['read'] == false) {
                                         await SupabaseClientService().client
@@ -84,19 +82,19 @@ class NotificationsPage extends ConsumerWidget {
                                         children: [
                                           Text(
                                             n['title'] ?? '',
-                                            style: sfText(
+                                            style: ClayTokens.titleLarge.copyWith(
                                               fontSize: 17,
                                               fontWeight: FontWeight.w500,
-                                              color: CupertinoAppColors.textPrimary,
+                                              color: ClayTokens.clayDarkTextPrimary,
                                               letterSpacing: -0.41,
                                             ),
                                           ),
                                           const SizedBox(height: 2),
                                           Text(
                                             n['message'] ?? '',
-                                            style: sfText(
+                                            style: ClayTokens.titleMedium.copyWith(
                                               fontSize: 15,
-                                              color: CupertinoAppColors.textSecondary,
+                                              color: ClayTokens.clayDarkTextSecondary,
                                               letterSpacing: -0.24,
                                             ),
                                           ),
@@ -118,19 +116,13 @@ class NotificationsPage extends ConsumerWidget {
                                         ref.invalidate(notificationsProvider);
                                       }
                                     },
-                                    activeColor: CupertinoAppColors.green,
+                                    activeTrackColor: ClayTokens.clayAccent,
                                   ),
                                 ),
                               ],
                             ),
                             if (!isLast)
-                              const Divider(
-                                color: CupertinoAppColors.separator,
-                                height: 0.5,
-                                thickness: 0.5,
-                                indent: 72,
-                                endIndent: 0,
-                              ),
+                              const SizedBox(height: 0.5),
                           ],
                         );
                       },
@@ -141,7 +133,7 @@ class NotificationsPage extends ConsumerWidget {
                 error: (e, _) => Center(
                   child: Text(
                     'Error: $e',
-                    style: sfText(color: CupertinoAppColors.red),
+                    style: ClayTokens.bodyMedium.copyWith(color: ClayTokens.clayError),
                   ),
                 ),
               ),
@@ -155,29 +147,24 @@ class NotificationsPage extends ConsumerWidget {
   Widget _buildHeader(BuildContext context, String title) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-      decoration: BoxDecoration(
-        border: Border(
-          bottom: BorderSide(color: CupertinoAppColors.separator, width: 0.5),
-        ),
-      ),
       child: Row(
         children: [
           CupertinoButton(
             padding: EdgeInsets.zero,
             onPressed: () => context.pop(),
-            child: const Icon(
+            child: Icon(
               CupertinoIcons.back,
-              color: CupertinoAppColors.primaryBlue,
+              color: ClayTokens.clayPrimary,
             ),
           ),
           Expanded(
             child: Text(
               title,
               textAlign: TextAlign.center,
-              style: sfText(
+              style: ClayTokens.titleLarge.copyWith(
                 fontSize: 17,
                 fontWeight: FontWeight.w600,
-                color: CupertinoAppColors.textPrimary,
+                color: ClayTokens.clayDarkTextPrimary,
                 letterSpacing: -0.41,
               ),
             ),

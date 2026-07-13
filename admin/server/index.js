@@ -22,34 +22,20 @@ const adminClient = createClient(supabaseUrl, serviceRoleKey, {
   auth: { autoRefreshToken: false, persistSession: false },
 })
 
-async function generateCode(supabase, role) {
-  const prefix = role === 'member' ? 'M' : 'T'
-  const { data } = await supabase
-    .from('profiles')
-    .select('code')
-    .like('code', `${prefix}%`)
-    .order('code', { ascending: false })
-    .limit(1)
-  const lastCode = data?.[0]?.code
-  let nextNum = 1
-  if (lastCode) {
-    nextNum = parseInt(lastCode.slice(1), 10) + 1
-  }
-  return `${prefix}${String(nextNum).padStart(3, '0')}`
-}
-
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', routes: ['enroll', 'users', 'delete-user', 'backfill-auth', 'backfill-codes', 'ai/predictions'] })
 })
 
 app.post('/api/enroll', async (req, res) => {
-  const { fullName, email, phone, dateOfBirth, gender, address } = req.body
+  const { fullName, email, phone, dateOfBirth, gender, address, emergencyContactName, emergencyContactPhone } = req.body
   if (!fullName || !email) return res.status(400).json({ error: 'Name and email are required' })
   try {
     const { error } = await adminClient.from('enrollments').insert({
       full_name: fullName, email, phone: phone || null,
       date_of_birth: dateOfBirth || null, gender: gender || null,
       address: address || null, status: 'pending',
+      emergency_contact_name: emergencyContactName || null,
+      emergency_contact_phone: emergencyContactPhone || null,
     })
     if (error) throw error
     res.json({ success: true })
@@ -59,19 +45,18 @@ app.post('/api/enroll', async (req, res) => {
 })
 
 app.post('/api/users', async (req, res) => {
-  const { email, password, fullName, role, phone, dateOfBirth, gender, address } = req.body
+  const { email, password, fullName, role, phone, dateOfBirth, gender, address, emergencyContactName, emergencyContactPhone } = req.body
 
   if (!email || !password || !fullName || !role) {
     return res.status(400).json({ error: 'Missing required fields: email, password, fullName, role' })
   }
 
   try {
-    const code = await generateCode(adminClient, role)
-
     const { data: authUser, error: authError } = await adminClient.auth.admin.createUser({
       email,
       password,
       email_confirm: true,
+      user_metadata: { full_name: fullName },
     })
 
     if (authError) throw authError
@@ -81,17 +66,18 @@ app.post('/api/users', async (req, res) => {
       role,
       full_name: fullName,
       email,
-      code,
       phone: phone || null,
       date_of_birth: dateOfBirth || null,
       gender: gender || null,
       address: address || null,
+      emergency_contact_name: emergencyContactName || null,
+      emergency_contact_phone: emergencyContactPhone || null,
     }
 
-    const { error: profileError } = await adminClient.from('profiles').insert(profileData)
+    const { data: profile, error: profileError } = await adminClient.from('profiles').insert(profileData).select('code').single()
     if (profileError) throw profileError
 
-    res.json({ success: true, userId: authUser.user.id })
+    res.json({ success: true, userId: authUser.user.id, code: profile.code })
   } catch (err) {
     console.error('Create user error:', err)
     const message = err?.message || err?.error_description || JSON.stringify(err)
@@ -106,13 +92,13 @@ app.post('/api/confirm-enrollment', async (req, res) => {
   if (!enrollment?.id) return res.status(400).json({ error: 'Missing enrollment data' })
 
   try {
-    const code = await generateCode(adminClient, 'member')
     const tempPassword = Math.random().toString(36).slice(-10) + 'A1!'
 
     const { data: authUser, error: authError } = await adminClient.auth.admin.createUser({
       email: enrollment.email,
       password: tempPassword,
       email_confirm: true,
+      user_metadata: { full_name: enrollment.full_name },
     })
     if (authError) throw authError
 
@@ -122,21 +108,24 @@ app.post('/api/confirm-enrollment', async (req, res) => {
       .eq('id', enrollment.id)
     if (updateError) throw updateError
 
-    const { error: profileError } = await adminClient
+    const { data: profile, error: profileError } = await adminClient
       .from('profiles')
       .insert({
         id: authUser.user.id,
         role: 'member',
         full_name: enrollment.full_name,
         email: enrollment.email,
-        code,
         phone: enrollment.phone || null,
         date_of_birth: enrollment.date_of_birth || null,
         gender: enrollment.gender || null,
+        emergency_contact_name: enrollment.emergency_contact_name || null,
+        emergency_contact_phone: enrollment.emergency_contact_phone || null,
       })
+      .select('code')
+      .single()
     if (profileError) throw profileError
 
-    res.json({ success: true, code, tempPassword })
+    res.json({ success: true, code: profile.code, tempPassword })
   } catch (err) {
     console.error('Confirm enrollment error:', err)
     res.status(500).json({ error: err?.message || 'Failed to confirm enrollment' })

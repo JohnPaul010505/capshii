@@ -3,8 +3,9 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared/services/supabase_client.dart';
-import '../../../../app/theme.dart';
 import '../../../shared/widgets/animations.dart';
+import '../../../shared/widgets/clay/clay_input.dart';
+import '../../../../app/design_tokens.dart';
 
 final trainerChatProvider = FutureProvider.autoDispose<Map<String, dynamic>?>((ref) async {
   final userId = SupabaseClientService().client.auth.currentUser!.id;
@@ -320,41 +321,27 @@ class _ChatPageState extends ConsumerState<ChatPage> {
                   child: Row(
                     children: [
                       Expanded(
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF2C2C2E),
-                            borderRadius: BorderRadius.circular(22),
-                            border: Border.all(color: const Color(0xFF38383A)),
-                          ),
-                          child: TextField(
-                            controller: _messageController,
-                            decoration: const InputDecoration(
-                              hintText: 'Message your trainer\u2026',
-                              hintStyle: TextStyle(color: Color(0xFF8E8E93), fontSize: 12),
-                              border: InputBorder.none,
-                              contentPadding: EdgeInsets.symmetric(vertical: 10),
-                            ),
-                            style: const TextStyle(color: Color(0xFFFFFFFF), fontSize: 12),
-                            maxLines: 3,
-                            minLines: 1,
-                            textInputAction: TextInputAction.send,
-                            onSubmitted: (_) => _sendMessage(),
-                          ),
-                        ),
+                    child: ClayInput(
+                      controller: _messageController,
+                      label: 'Message your trainer',
+                      maxLines: 3,
+                      minLines: 1,
+                      textInputAction: TextInputAction.send,
+                      onSubmitted: (_) => _sendMessage(),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  GestureDetector(
+                    onTap: _sendMessage,
+                    child: Container(
+                      width: 44, height: 44,
+                      decoration: BoxDecoration(
+                        color: ClayTokens.clayPrimary,
+                        shape: BoxShape.circle,
                       ),
-                      const SizedBox(width: 8),
-                      GestureDetector(
-                        onTap: _sendMessage,
-                        child: Container(
-                          width: 44, height: 44,
-                          decoration: const BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: Color(0xFF0A84FF),
-                          ),
-                          child: const Icon(CupertinoIcons.paperplane, color: Colors.white, size: 16),
-                        ),
-                      ),
+                      child: Icon(Icons.send, color: Colors.white, size: 16),
+                    ),
+                  ),
                     ],
                   ),
                 ),

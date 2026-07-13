@@ -3,10 +3,9 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared/services/supabase_client.dart';
-import '../../../../app/cupertino_theme.dart';
+import '../../../../app/design_tokens.dart';
 import '../../../shared/widgets/pressable.dart';
 import '../../../shared/widgets/skeleton.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 final chatRoomsWithProfilesProvider = FutureProvider.autoDispose<List<Map<String, dynamic>>>((ref) async {
   final client = SupabaseClientService().client;
@@ -36,7 +35,7 @@ final chatRoomsWithProfilesProvider = FutureProvider.autoDispose<List<Map<String
       result.add({
         'roomId': room['id'] as String,
         'memberId': otherId,
-        'full_name': (profile as Map<String, dynamic>)['full_name'] as String? ?? 'Unknown',
+        'full_name': profile['full_name'] as String? ?? 'Unknown',
       });
     } catch (_) {}
   }
@@ -62,10 +61,10 @@ class ChatListPage extends ConsumerWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text('Conversations',
-                    style: sfText(fontSize: 20, fontWeight: FontWeight.w600, color: CupertinoAppColors.textPrimary, letterSpacing: 0.38)),
+                    style: ClayTokens.headlineMedium.copyWith(fontWeight: FontWeight.w600, color: ClayTokens.clayDarkTextPrimary, letterSpacing: 0.38)),
                   roomsAsync.when(
                     data: (rooms) => Text('${rooms.length} members',
-                      style: sfText(fontSize: 13, fontWeight: FontWeight.w400, color: CupertinoAppColors.textTertiary, letterSpacing: -0.08)),
+                      style: ClayTokens.bodySmall.copyWith(fontSize: 13, fontWeight: FontWeight.w400, color: ClayTokens.clayDarkTextTertiary, letterSpacing: -0.08)),
                     loading: () => const SizedBox(),
                     error: (_, __) => const SizedBox(),
                   ),
@@ -80,9 +79,9 @@ class ChatListPage extends ConsumerWidget {
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Icon(CupertinoIcons.bubble_left, color: CupertinoAppColors.textTertiary, size: 48),
+                          Icon(CupertinoIcons.bubble_left, color: ClayTokens.clayDarkTextTertiary, size: 48),
                           const SizedBox(height: 12),
-                          Text('No conversations yet', style: sfText(fontSize: 13, fontWeight: FontWeight.w400, color: CupertinoAppColors.textQuaternary, letterSpacing: -0.08)),
+                          Text('No conversations yet', style: ClayTokens.bodySmall.copyWith(fontSize: 13, fontWeight: FontWeight.w400, color: ClayTokens.clayDarkTextTertiary, letterSpacing: -0.08)),
                         ],
                       ),
                     );
@@ -100,35 +99,35 @@ class ChatListPage extends ConsumerWidget {
                           onTap: () => context.push('/trainer/chat/${r['roomId']}'),
                           padding: const EdgeInsets.all(12),
                           margin: const EdgeInsets.only(bottom: 8),
-                          color: CupertinoAppColors.groupedBackground,
-                          border: Border.all(color: CupertinoAppColors.separator.withAlpha(100)),
+                          color: ClayTokens.clayDarkSurface,
+                          border: Border.all(color: ClayTokens.clayDarkBorder.withAlpha(100)),
                           borderRadius: BorderRadius.circular(16),
                           child: Row(
                             children: [
                               Container(
                                 width: 48, height: 48,
-                                decoration: const BoxDecoration(
+                                decoration: BoxDecoration(
                                   shape: BoxShape.circle,
-                                  color: CupertinoAppColors.cardElevated,
+                                  color: ClayTokens.clayDarkSurfaceElevated,
                                 ),
                                 alignment: Alignment.center,
-                                child: Text(initials, style: sfText(
-                                  color: CupertinoAppColors.textPrimary, fontSize: 13, fontWeight: FontWeight.w600)),
+                                child: Text(initials, style: ClayTokens.bodySmall.copyWith(
+                                  color: ClayTokens.clayDarkTextPrimary, fontSize: 13, fontWeight: FontWeight.w600)),
                               ),
                               const SizedBox(width: 10),
                               Expanded(
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text(name, style: sfText(
-                                      fontSize: 15, fontWeight: FontWeight.w500, color: CupertinoAppColors.textPrimary, letterSpacing: -0.24)),
+                                    Text(name, style: ClayTokens.titleLarge.copyWith(
+                                      fontSize: 15, fontWeight: FontWeight.w500, color: ClayTokens.clayDarkTextPrimary, letterSpacing: -0.24)),
                                     const SizedBox(height: 2),
                                     Text('Tap to open conversation',
-                                      style: sfText(fontSize: 13, fontWeight: FontWeight.w400, color: CupertinoAppColors.textTertiary, letterSpacing: -0.08)),
+                                      style: ClayTokens.bodySmall.copyWith(fontSize: 13, fontWeight: FontWeight.w400, color: ClayTokens.clayDarkTextTertiary, letterSpacing: -0.08)),
                                   ],
                                 ),
                               ),
-                              const Icon(CupertinoIcons.chevron_forward, color: CupertinoAppColors.textTertiary, size: 18),
+                              Icon(CupertinoIcons.chevron_forward, color: ClayTokens.clayDarkTextTertiary, size: 18),
                             ],
                           ),
                         ),
@@ -147,7 +146,7 @@ class ChatListPage extends ConsumerWidget {
                     ],
                   ),
                 ),
-                error: (e, _) => Center(child: Text('Error: $e', style: sfText(fontSize: 12, fontWeight: FontWeight.w400, color: CupertinoAppColors.textQuaternary))),
+                error: (e, _) => Center(child: Text('Error: $e', style: ClayTokens.labelMedium.copyWith(fontWeight: FontWeight.w400, color: ClayTokens.clayDarkTextTertiary))),
               ),
             ),
           ],

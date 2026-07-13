@@ -1,9 +1,11 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared/providers/auth_provider.dart';
-import '../../../app/cupertino_theme.dart';
+import '../../../app/design_tokens.dart';
+import '../../shared/widgets/clay/clay_card.dart';
+import '../../shared/widgets/clay/clay_button.dart';
+import '../../shared/widgets/clay/clay_input.dart';
 
 class LoginPage extends ConsumerStatefulWidget {
   const LoginPage({super.key});
@@ -52,7 +54,7 @@ class _LoginPageState extends ConsumerState<LoginPage>
 
     _errorCtrl = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 300),
+      duration: ClayTokens.normal,
     );
 
     _emailFocus.addListener(() => setState(() {}));
@@ -193,7 +195,7 @@ class _LoginPageState extends ConsumerState<LoginPage>
         shape: BoxShape.circle,
         boxShadow: [
           BoxShadow(
-            color: CupertinoAppColors.purple.withAlpha(60),
+            color: ClayTokens.clayPrimary.withAlpha(60),
             blurRadius: 24,
             spreadRadius: 2,
           ),
@@ -206,221 +208,149 @@ class _LoginPageState extends ConsumerState<LoginPage>
   }
 
   Widget _buildLoginCard() {
-    return Container(
-      width: double.infinity,
-      constraints: const BoxConstraints(maxWidth: 440),
-      decoration: BoxDecoration(
-        color: CupertinoAppColors.groupedBackground,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(
-          color: CupertinoAppColors.separator.withOpacity(0.5),
+    return ClayCard(
+      variant: ClayCardVariant.elevated,
+      padding: ClayCardPadding.large,
+      borderRadius: BorderRadius.circular(ClayTokens.radiusCard),
+      customShadows: [
+        BoxShadow(
+          color: ClayTokens.clayPrimary.withAlpha(30),
+          blurRadius: 32,
+          spreadRadius: 2,
+          offset: const Offset(0, 8),
         ),
-        boxShadow: [
-          BoxShadow(
-            color: CupertinoAppColors.purple.withAlpha(30),
-            blurRadius: 32,
-            spreadRadius: 2,
-            offset: const Offset(0, 8),
+        BoxShadow(
+          color: Colors.black.withAlpha(100),
+          blurRadius: 20,
+          offset: const Offset(0, 4),
+        ),
+      ],
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            'FitTrack',
+            style: ClayTokens.headlineLarge.copyWith(
+              fontWeight: FontWeight.w800,
+              color: ClayTokens.clayDarkTextPrimary,
+            ),
           ),
-          BoxShadow(
-            color: Colors.black.withAlpha(100),
-            blurRadius: 20,
-            offset: const Offset(0, 4),
+          const SizedBox(height: 4),
+          Text(
+            'Your fitness journey starts here',
+            style: ClayTokens.bodySmall.copyWith(
+              color: ClayTokens.clayDarkTextTertiary,
+            ),
           ),
-        ],
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(28),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              'FitTrack',
-              style: sfText(
-                fontSize: 24,
-                fontWeight: FontWeight.w800,
-                color: CupertinoAppColors.textPrimary,
-              ),
+          const SizedBox(height: 24),
+          _buildRoleToggle(),
+          const SizedBox(height: 22),
+          ClayInput(
+            controller: _codeController,
+            focusNode: _emailFocus,
+            label: 'UID',
+            hint: '',
+            prefixIcon: const Icon(Icons.tag, size: 18),
+            keyboardType: TextInputType.text,
+            textInputAction: TextInputAction.next,
+            textCapitalization: TextCapitalization.characters,
+            onSubmitted: (_) => _passwordFocus.requestFocus(),
+          ),
+          const SizedBox(height: 14),
+          ClayInput(
+            controller: _passwordController,
+            focusNode: _passwordFocus,
+            label: 'Password',
+            hint: '',
+            obscureText: _obscurePassword,
+            prefixIcon: const Icon(Icons.lock_outlined, size: 18),
+            suffixIcon: Icon(
+              _obscurePassword ? Icons.visibility_off : Icons.visibility,
+              size: 18,
+              color: ClayTokens.clayDarkTextTertiary,
             ),
-            const SizedBox(height: 4),
-            Text(
-              'Your fitness journey starts here',
-              style: sfText(
-                fontSize: 13,
-                color: CupertinoAppColors.textTertiary,
-              ),
-            ),
-            const SizedBox(height: 24),
-            _buildRoleToggle(),
-            const SizedBox(height: 22),
-            _buildFloatingField(
-              controller: _codeController,
-              focusNode: _emailFocus,
-              label: 'Code',
-              icon: CupertinoIcons.mail,
-              keyboardType: TextInputType.text,
-              textInputAction: TextInputAction.next,
-              textCapitalization: TextCapitalization.characters,
-              prefixWidget: Text(
-                '#',
-                style: sfText(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
-                  color: CupertinoAppColors.textTertiary,
-                ),
-              ),
-            ),
-            const SizedBox(height: 14),
-            _buildFloatingField(
-              controller: _passwordController,
-              focusNode: _passwordFocus,
-              label: 'Password',
-              icon: CupertinoIcons.lock,
-              obscureText: _obscurePassword,
-              textInputAction: TextInputAction.done,
-              onSubmitted: (_) => _login(),
-              suffixIcon: Icon(
-                _obscurePassword ? CupertinoIcons.eye_slash : CupertinoIcons.eye,
-                color: CupertinoAppColors.textTertiary,
-                size: 18,
-              ),
-              onSuffixTap: () => setState(() => _obscurePassword = !_obscurePassword),
-            ),
-            if (_error != null) ...[
-              const SizedBox(height: 12),
-              FadeTransition(
-                opacity: _errorCtrl,
-                child: Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: CupertinoAppColors.red.withOpacity(0.08),
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(
-                      color: CupertinoAppColors.red.withOpacity(0.3),
-                    ),
-                  ),
-                  child: Row(
-                    children: [
-                      const Icon(
-                        CupertinoIcons.exclamationmark_circle,
-                        color: CupertinoAppColors.red,
-                        size: 16,
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          _error!,
-                          style: sfText(
-                            color: CupertinoAppColors.red,
-                            fontSize: 13,
-                          ),
-                        ),
-                      ),
-                      GestureDetector(
-                        onTap: () => setState(() => _error = null),
-                        child: const Icon(
-                          CupertinoIcons.xmark_circle_fill,
-                          color: CupertinoAppColors.red,
-                          size: 16,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-
-            if (_prefixWarning != null) ...[
-              const SizedBox(height: 16),
-              Container(
+            onSuffixTap: () => setState(() => _obscurePassword = !_obscurePassword),
+            textInputAction: TextInputAction.done,
+            onSubmitted: (_) => _login(),
+          ),
+          if (_error != null) ...[
+            const SizedBox(height: 12),
+            FadeTransition(
+              opacity: _errorCtrl,
+              child: Container(
                 width: double.infinity,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 10,
-                ),
+                padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: CupertinoAppColors.orange.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8),
+                  color: ClayTokens.clayError.withAlpha(20),
+                  borderRadius: BorderRadius.circular(ClayTokens.radiusXs),
                   border: Border.all(
-                    color: CupertinoAppColors.orange.withOpacity(0.3),
+                    color: ClayTokens.clayError.withAlpha(77),
                   ),
                 ),
                 child: Row(
                   children: [
-                    const Icon(
-                      CupertinoIcons.info_circle_fill,
-                      color: CupertinoAppColors.orange,
-                      size: 16,
-                    ),
+                    Icon(Icons.error_outline, color: ClayTokens.clayError, size: 16),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        _prefixWarning!,
-                        style: sfText(
-                          color: CupertinoAppColors.orange,
-                          fontSize: 12,
-                        ),
+                        _error!,
+                        style: ClayTokens.bodySmall.copyWith(color: ClayTokens.clayError),
                       ),
                     ),
                     GestureDetector(
-                      onTap: () => setState(() => _prefixWarning = null),
-                      child: const Icon(
-                        CupertinoIcons.xmark_circle_fill,
-                        color: CupertinoAppColors.orange,
-                        size: 16,
-                      ),
+                      onTap: () => setState(() => _error = null),
+                      child: Icon(Icons.close, color: ClayTokens.clayError, size: 16),
                     ),
                   ],
                 ),
               ),
-            ],
-
+            ),
+          ],
+          if (_prefixWarning != null) ...[
             const SizedBox(height: 16),
-            SizedBox(
+            Container(
               width: double.infinity,
-              height: 52,
-              child: GestureDetector(
-                onTap: _loading ? null : _login,
-                child: Container(
-                  width: double.infinity,
-                  height: 52,
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(12),
-                    gradient: const LinearGradient(
-                      colors: [
-                        CupertinoAppColors.purple,
-                        CupertinoAppColors.primaryBlue,
-                      ],
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              decoration: BoxDecoration(
+                color: ClayTokens.clayWarning.withAlpha(26),
+                borderRadius: BorderRadius.circular(ClayTokens.radiusXs),
+                border: Border.all(color: ClayTokens.clayWarning.withAlpha(77)),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.info_outline, color: ClayTokens.clayWarning, size: 16),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      _prefixWarning!,
+                      style: ClayTokens.labelMedium.copyWith(color: ClayTokens.clayWarning),
                     ),
                   ),
-                  child: _loading
-                      ? const CupertinoActivityIndicator(
-                          color: CupertinoAppColors.textPrimary,
-                        )
-                      : Text(
-                          'Sign In',
-                          style: sfText(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                            letterSpacing: 0.3,
-                            color: CupertinoAppColors.textPrimary,
-                          ),
-                        ),
-                ),
-              ),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'v1.0.0 \u00b7 Powered by FitTrack',
-              style: sfText(
-                fontSize: 11,
-                color: CupertinoAppColors.textTertiary,
+                  GestureDetector(
+                    onTap: () => setState(() => _prefixWarning = null),
+                    child: Icon(Icons.close, color: ClayTokens.clayWarning, size: 16),
+                  ),
+                ],
               ),
             ),
           ],
-        ),
+          const SizedBox(height: 16),
+          ClayButton(
+            label: 'Sign In',
+            onPressed: _login,
+            loading: _loading,
+            fullWidth: true,
+            size: ClayButtonSize.large,
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'v1.0.0 \u00b7 Powered by FitTrack',
+            style: ClayTokens.bodyMedium.copyWith(
+              fontSize: 11,
+              color: ClayTokens.clayDarkTextTertiary,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -430,23 +360,21 @@ class _LoginPageState extends ConsumerState<LoginPage>
       width: double.infinity,
       height: 50,
       decoration: BoxDecoration(
-        color: CupertinoAppColors.cardElevated,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(
-          color: CupertinoAppColors.separator.withOpacity(0.4),
-        ),
+        color: ClayTokens.clayDarkCard,
+        borderRadius: BorderRadius.circular(ClayTokens.radiusSm),
+        border: Border.all(color: ClayTokens.clayDarkBorder.withAlpha(102)),
       ),
       child: Row(
         children: [
           _roleTab(
             label: 'MEMBER',
-            icon: CupertinoIcons.person,
+            icon: Icons.person,
             isSelected: _selectedRole == 'member',
             onTap: () => setState(() { _selectedRole = 'member'; _prefixWarning = null; }),
           ),
           _roleTab(
             label: 'TRAINER',
-            icon: CupertinoIcons.person,
+            icon: Icons.person,
             isSelected: _selectedRole == 'trainer',
             onTap: () => setState(() { _selectedRole = 'trainer'; _prefixWarning = null; }),
           ),
@@ -465,24 +393,19 @@ class _LoginPageState extends ConsumerState<LoginPage>
       child: GestureDetector(
         onTap: _loading ? null : onTap,
         child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
+          duration: ClayTokens.normal,
           curve: Curves.easeInOut,
           margin: const EdgeInsets.all(4),
           decoration: BoxDecoration(
             gradient: isSelected
-                ? const LinearGradient(
-                    colors: [
-                      CupertinoAppColors.purple,
-                      CupertinoAppColors.primaryBlue,
-                    ],
-                  )
+                ? LinearGradient(colors: [ClayTokens.clayPrimary, ClayTokens.clayPrimary])
                 : null,
             color: isSelected ? null : Colors.transparent,
-            borderRadius: BorderRadius.circular(7),
+            borderRadius: BorderRadius.circular(ClayTokens.radiusXs),
             boxShadow: isSelected
                 ? [
                     BoxShadow(
-                      color: CupertinoAppColors.purple.withAlpha(60),
+                      color: ClayTokens.clayPrimary.withAlpha(60),
                       blurRadius: 6,
                       offset: const Offset(0, 2),
                     ),
@@ -493,22 +416,14 @@ class _LoginPageState extends ConsumerState<LoginPage>
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(
-                icon,
-                size: 16,
-                color: isSelected
-                    ? CupertinoAppColors.textPrimary
-                    : CupertinoAppColors.textTertiary,
-              ),
+              Icon(icon, size: 16, color: isSelected ? ClayTokens.clayDarkTextPrimary : ClayTokens.clayDarkTextTertiary),
               const SizedBox(width: 6),
               Text(
                 label,
-                style: sfText(
+                style: ClayTokens.bodyMedium.copyWith(
                   fontSize: 11,
                   fontWeight: isSelected ? FontWeight.w700 : FontWeight.w400,
-                  color: isSelected
-                      ? CupertinoAppColors.textPrimary
-                      : CupertinoAppColors.textTertiary,
+                  color: isSelected ? ClayTokens.clayDarkTextPrimary : ClayTokens.clayDarkTextTertiary,
                   letterSpacing: 0.5,
                 ),
               ),
@@ -518,78 +433,4 @@ class _LoginPageState extends ConsumerState<LoginPage>
       ),
     );
   }
-
-  Widget _buildFloatingField({
-    required TextEditingController controller,
-    required FocusNode focusNode,
-    required String label,
-    required IconData icon,
-    TextInputType? keyboardType,
-    TextInputAction textInputAction = TextInputAction.next,
-    bool obscureText = false,
-    TextCapitalization textCapitalization = TextCapitalization.none,
-    Widget? prefixWidget,
-    Widget? suffixIcon,
-    VoidCallback? onSuffixTap,
-    void Function(String)? onSubmitted,
-  }) {
-    final isFloating = focusNode.hasFocus || controller.text.isNotEmpty;
-
-    return Semantics(
-      label: '$label input',
-      child: Stack(
-        clipBehavior: Clip.none,
-        children: [
-          CupertinoTextField(
-            controller: controller,
-            focusNode: focusNode,
-            obscureText: obscureText,
-            keyboardType: keyboardType,
-            textInputAction: textInputAction,
-            textCapitalization: textCapitalization,
-            onSubmitted: onSubmitted,
-            style: sfText(fontSize: 14, color: CupertinoAppColors.textPrimary),
-            padding: const EdgeInsets.only(left: 44, right: 44, top: 18, bottom: 18),
-            decoration: BoxDecoration(
-              color: Colors.transparent,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: CupertinoAppColors.separator.withOpacity(0.4)),
-            ),
-          ),
-          Positioned(
-            left: 16,
-            top: 18,
-            child: prefixWidget ?? Icon(icon, color: CupertinoAppColors.textTertiary, size: 18),
-          ),
-          if (suffixIcon != null)
-            Positioned(
-              right: 16,
-              top: 18,
-              child: GestureDetector(onTap: onSuffixTap, child: suffixIcon),
-            ),
-          AnimatedPositioned(
-            duration: const Duration(milliseconds: 180),
-            curve: Curves.easeInOut,
-            left: 44,
-            top: isFloating ? -7 : 18,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 4),
-              color: CupertinoAppColors.groupedBackground,
-              child: AnimatedDefaultTextStyle(
-                duration: const Duration(milliseconds: 180),
-                curve: Curves.easeInOut,
-                style: sfText(
-                  fontSize: isFloating ? 11 : 14,
-                  color: CupertinoAppColors.textTertiary,
-                ),
-                child: Text(label),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 }
-
-

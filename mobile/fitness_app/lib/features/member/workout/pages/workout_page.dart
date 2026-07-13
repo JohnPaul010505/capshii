@@ -2,7 +2,6 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared/services/supabase_client.dart';
-import '../../../../app/theme.dart';
 import '../providers/workout_timer_provider.dart';
 import '../../../shared/widgets/pressable.dart';
 import '../../../shared/widgets/animations.dart';

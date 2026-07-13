@@ -12,7 +12,7 @@ class FitnessApp extends ConsumerWidget {
     return MaterialApp.router(
       title: 'FitTrack',
       debugShowCheckedModeBanner: false,
-      theme: iOSThemeData,
+      theme: clayThemeData,
       routerConfig: routerConfig,
     );
   }

@@ -1,10 +1,8 @@
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:shared/services/supabase_client.dart';
-import '../../../../app/cupertino_theme.dart';
+import '../../../../app/design_tokens.dart';
 
 final goalsProvider = FutureProvider<List<Map<String, dynamic>>>((ref) async {
   final userId = SupabaseClientService().client.auth.currentUser!.id;
@@ -14,7 +12,7 @@ final goalsProvider = FutureProvider<List<Map<String, dynamic>>>((ref) async {
       .select()
       .eq('member_id', userId)
       .order('created_at', ascending: false);
-  return response as List<Map<String, dynamic>>;
+  return response;
 });
 
 class GoalsPage extends ConsumerStatefulWidget {
@@ -63,7 +61,7 @@ class _GoalsPageState extends ConsumerState<GoalsPage> {
     final goalsAsync = ref.watch(goalsProvider);
 
     return CupertinoPageScaffold(
-      backgroundColor: CupertinoAppColors.background,
+      backgroundColor: ClayTokens.clayDarkBase,
       child: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -74,9 +72,9 @@ class _GoalsPageState extends ConsumerState<GoalsPage> {
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                 children: [
                   Container(
-                    decoration: const BoxDecoration(
-                      color: CupertinoAppColors.groupedBackground,
-                      borderRadius: BorderRadius.all(Radius.circular(16)),
+                    decoration: BoxDecoration(
+                      color: ClayTokens.clayDarkSurface,
+                      borderRadius: const BorderRadius.all(Radius.circular(16)),
                     ),
                     child: Padding(
                       padding: const EdgeInsets.all(16),
@@ -85,10 +83,10 @@ class _GoalsPageState extends ConsumerState<GoalsPage> {
                         children: [
                           Text(
                             'New Goal',
-                            style: sfText(
+                            style: ClayTokens.titleLarge.copyWith(
                               fontSize: 17,
                               fontWeight: FontWeight.w600,
-                              color: CupertinoAppColors.textPrimary,
+                              color: ClayTokens.clayDarkTextPrimary,
                             ),
                           ),
                           const SizedBox(height: 12),
@@ -100,17 +98,17 @@ class _GoalsPageState extends ConsumerState<GoalsPage> {
                             width: double.infinity,
                             height: 44,
                             child: CupertinoButton(
-                              color: CupertinoAppColors.primaryBlue,
+                              color: ClayTokens.clayPrimary,
                               borderRadius: BorderRadius.circular(12),
                               onPressed: _saving ? null : _save,
                               child: _saving
-                                  ? const CupertinoActivityIndicator(color: CupertinoAppColors.textPrimary)
+                                  ? CupertinoActivityIndicator(color: ClayTokens.clayDarkTextPrimary)
                                   : Text(
                                       'Add Goal',
-                                      style: sfText(
+                                      style: ClayTokens.titleLarge.copyWith(
                                         fontSize: 17,
                                         fontWeight: FontWeight.w600,
-                                        color: CupertinoAppColors.textPrimary,
+                                        color: ClayTokens.clayDarkTextPrimary,
                                       ),
                                     ),
                             ),
@@ -124,10 +122,9 @@ class _GoalsPageState extends ConsumerState<GoalsPage> {
                     padding: const EdgeInsets.only(left: 4, bottom: 8),
                     child: Text(
                       'My Goals',
-                      style: sfText(
-                        fontSize: 20,
+                      style: ClayTokens.headlineMedium.copyWith(
                         fontWeight: FontWeight.w700,
-                        color: CupertinoAppColors.textPrimary,
+                        color: ClayTokens.clayDarkTextPrimary,
                         letterSpacing: -0.36,
                       ),
                     ),
@@ -135,7 +132,7 @@ class _GoalsPageState extends ConsumerState<GoalsPage> {
                   goalsAsync.when(
                     data: (goals) => Container(
                       decoration: BoxDecoration(
-                        color: CupertinoAppColors.groupedBackground,
+                        color: ClayTokens.clayDarkSurface,
                         borderRadius: BorderRadius.circular(16),
                       ),
                       child: Column(
@@ -154,19 +151,19 @@ class _GoalsPageState extends ConsumerState<GoalsPage> {
                                         children: [
                                           Text(
                                             g['title'] ?? '',
-                                            style: sfText(
+                                            style: ClayTokens.titleLarge.copyWith(
                                               fontSize: 17,
                                               fontWeight: FontWeight.w500,
-                                              color: CupertinoAppColors.textPrimary,
+                                              color: ClayTokens.clayDarkTextPrimary,
                                               letterSpacing: -0.41,
                                             ),
                                           ),
                                           if (g['target_value'] != null)
                                             Text(
                                               'Target: ${g['target_value']}',
-                                              style: sfText(
+                                              style: ClayTokens.titleMedium.copyWith(
                                                 fontSize: 15,
-                                                color: CupertinoAppColors.textTertiary,
+                                                color: ClayTokens.clayDarkTextTertiary,
                                                 letterSpacing: -0.24,
                                               ),
                                             ),
@@ -182,21 +179,15 @@ class _GoalsPageState extends ConsumerState<GoalsPage> {
                                           ? CupertinoIcons.checkmark_circle_fill
                                           : CupertinoIcons.circle,
                                       color: g['status'] == 'completed'
-                                          ? CupertinoAppColors.green
-                                          : CupertinoAppColors.primaryBlue,
+                                           ? ClayTokens.clayAccent
+                                           : ClayTokens.clayPrimary,
                                       size: 24,
                                     ),
                                   ),
                                 ],
                               ),
                               if (!isLast)
-                                const Divider(
-                                  color: CupertinoAppColors.separator,
-                                  height: 0.5,
-                                  thickness: 0.5,
-                                  indent: 16,
-                                  endIndent: 16,
-                                ),
+                                const SizedBox(height: 0.5),
                             ],
                           );
                         }).toList(),
@@ -207,7 +198,7 @@ class _GoalsPageState extends ConsumerState<GoalsPage> {
                       padding: const EdgeInsets.all(16),
                       child: Text(
                         'Error: $e',
-                        style: sfText(color: CupertinoAppColors.red),
+                        style: ClayTokens.bodyMedium.copyWith(color: ClayTokens.clayError),
                       ),
                     ),
                   ),
@@ -223,29 +214,24 @@ class _GoalsPageState extends ConsumerState<GoalsPage> {
   Widget _buildHeader(String title) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-      decoration: BoxDecoration(
-        border: Border(
-          bottom: BorderSide(color: CupertinoAppColors.separator, width: 0.5),
-        ),
-      ),
       child: Row(
         children: [
           CupertinoButton(
             padding: EdgeInsets.zero,
             onPressed: () => context.pop(),
-            child: const Icon(
+            child: Icon(
               CupertinoIcons.back,
-              color: CupertinoAppColors.primaryBlue,
+              color: ClayTokens.clayPrimary,
             ),
           ),
           Expanded(
             child: Text(
               title,
               textAlign: TextAlign.center,
-              style: sfText(
+              style: ClayTokens.titleLarge.copyWith(
                 fontSize: 17,
                 fontWeight: FontWeight.w600,
-                color: CupertinoAppColors.textPrimary,
+                color: ClayTokens.clayDarkTextPrimary,
                 letterSpacing: -0.41,
               ),
             ),
@@ -257,23 +243,18 @@ class _GoalsPageState extends ConsumerState<GoalsPage> {
   }
 
   Widget _buildField(TextEditingController controller, String label, [TextInputType? keyboardType]) {
-    return Container(
+    return CupertinoTextField(
+      controller: controller,
+      placeholder: label,
+      placeholderStyle: ClayTokens.bodyMedium.copyWith(color: ClayTokens.clayDarkTextTertiary),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
       decoration: BoxDecoration(
-        color: CupertinoAppColors.cardElevated,
+        color: ClayTokens.clayDarkSurfaceElevated,
         borderRadius: BorderRadius.circular(10),
       ),
-      child: TextField(
-        controller: controller,
-        decoration: InputDecoration(
-          labelText: label,
-          labelStyle: sfText(color: CupertinoAppColors.textTertiary),
-          border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-        ),
-        keyboardType: keyboardType ?? TextInputType.text,
-        cursorColor: CupertinoAppColors.primaryBlue,
-        style: sfText(color: CupertinoAppColors.textPrimary),
-      ),
+      keyboardType: keyboardType ?? TextInputType.text,
+      cursorColor: ClayTokens.clayPrimary,
+      style: ClayTokens.bodyMedium.copyWith(color: ClayTokens.clayDarkTextPrimary),
     );
   }
 }

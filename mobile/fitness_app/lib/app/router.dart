@@ -22,11 +22,6 @@ import '../features/trainer/profile/pages/profile_page.dart' as trainer_profile;
 import '../features/shared/checkin/checkin_page.dart';
 import '../features/shared/widgets/glass_bottom_nav.dart';
 import '../features/shared/widgets/nav_icons.dart';
-import '../features/admin/shell/admin_shell.dart';
-import '../features/admin/dashboard/pages/dashboard_page.dart' as admin_dashboard;
-import '../features/admin/members/pages/admin_members_page.dart' as admin_members;
-import '../features/admin/trainers/pages/admin_trainers_page.dart' as admin_trainers;
-import '../features/admin/settings/pages/admin_settings_page.dart' as admin_settings;
 
 final _memberShellKey = GlobalKey<NavigatorState>();
 final _trainerShellKey = GlobalKey<NavigatorState>();
@@ -63,7 +58,6 @@ final routerProvider = Provider<GoRouter>((ref) {
       if (!isLoggedIn && !isLoginRoute) return '/login';
       if (isLoggedIn && isLoginRoute) {
         if (profile?.role == 'trainer') return '/trainer/dashboard';
-        if (profile?.role == 'admin') return '/admin/dashboard';
         return '/member/home';
       }
       if (isLoggedIn && profile != null) {
@@ -72,7 +66,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         if (profile.role == 'member' && loc.startsWith('/admin')) return '/member/home';
         if (profile.role == 'trainer' && loc.startsWith('/member')) return '/trainer/dashboard';
         if (profile.role == 'trainer' && loc.startsWith('/admin')) return '/trainer/dashboard';
-        if (profile.role == 'admin' && (loc.startsWith('/member') || loc.startsWith('/trainer'))) return '/admin/dashboard';
+        if (profile.role == 'admin') return '/member/home';
       }
       return null;
     },
@@ -95,15 +89,6 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/member/goals', pageBuilder: (_, __) => _iosPush(const GoalsPage())),
       GoRoute(path: '/member/feedback', pageBuilder: (_, __) => _iosPush(const FeedbackPage())),
       GoRoute(path: '/member/notifications', pageBuilder: (_, __) => _iosPush(const NotificationsPage())),
-      ShellRoute(
-        builder: (_, __, child) => AdminShell(child: child),
-        routes: [
-          GoRoute(path: '/admin/dashboard', pageBuilder: (_, __) => _iosPush(const admin_dashboard.DashboardPage())),
-          GoRoute(path: '/admin/members', pageBuilder: (_, __) => _iosPush(const admin_members.AdminMembersPage())),
-          GoRoute(path: '/admin/trainers', pageBuilder: (_, __) => _iosPush(const admin_trainers.AdminTrainersPage())),
-          GoRoute(path: '/admin/settings', pageBuilder: (_, __) => _iosPush(const admin_settings.AdminSettingsPage())),
-        ],
-      ),
       ShellRoute(
         navigatorKey: _trainerShellKey,
         builder: (_, __, child) => TrainerShell(child: child),

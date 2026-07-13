@@ -35,15 +35,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   async function fetchProfile(userId: string) {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('profiles')
       .select('*')
       .eq('id', userId)
       .single()
 
-    if (data) {
-      setProfile(data as Profile)
+    if (error || !data) {
+      await supabase.auth.signOut()
+      setProfile(null)
+      setLoading(false)
+      return
     }
+
+    setProfile(data as Profile)
     setLoading(false)
   }
 
@@ -54,13 +59,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return 'Login failed'
 
-    const { data } = await supabase
+    const { data, error: profileError } = await supabase
       .from('profiles')
       .select('role')
       .eq('id', user.id)
       .single()
 
-    if (data?.role !== 'admin') {
+    if (profileError || !data || data.role !== 'admin') {
       await supabase.auth.signOut()
       return 'Access denied. Admin account required.'
     }

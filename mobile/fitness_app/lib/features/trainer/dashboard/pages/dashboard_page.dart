@@ -2,10 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared/services/supabase_client.dart';
-import '../../../../app/cupertino_theme.dart';
+import '../../../../app/design_tokens.dart';
 import '../../../shared/widgets/skeleton.dart';
 import '../../../shared/widgets/animations.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 final trainerDashboardProvider = FutureProvider.autoDispose<Map<String, dynamic>>((ref) async {
   final client = SupabaseClientService().client;
@@ -110,12 +109,12 @@ class DashboardPage extends ConsumerWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text('Dashboard',
-                        style: sfText(fontSize: 20, fontWeight: FontWeight.w600, color: CupertinoAppColors.textPrimary, letterSpacing: 0.38)),
+                        style: ClayTokens.headlineMedium.copyWith(fontWeight: FontWeight.w600, color: ClayTokens.clayDarkTextPrimary, letterSpacing: 0.38)),
                       Text(name,
-                        style: sfText(fontSize: 13, fontWeight: FontWeight.w400, color: CupertinoAppColors.textTertiary)),
+                        style: ClayTokens.bodySmall.copyWith(fontSize: 13, fontWeight: FontWeight.w400, color: ClayTokens.clayDarkTextTertiary)),
                     ],
                   ),
-                  const Icon(CupertinoIcons.bell, color: CupertinoAppColors.textTertiary, size: 20),
+                  Icon(CupertinoIcons.bell, color: ClayTokens.clayDarkTextTertiary, size: 20),
                 ],
               ),
             ),
@@ -144,7 +143,7 @@ class DashboardPage extends ConsumerWidget {
                     ],
                   ),
                 ),
-                error: (e, _) => Center(child: Text('Error: $e', style: sfText(fontSize: 12, fontWeight: FontWeight.w400, color: CupertinoAppColors.textQuaternary))),
+                error: (e, _) => Center(child: Text('Error: $e', style: ClayTokens.labelMedium.copyWith(fontWeight: FontWeight.w400, color: ClayTokens.clayDarkTextTertiary))),
               ),
             ),
           ],
@@ -178,7 +177,7 @@ class _DashboardContent extends StatelessWidget {
                 Expanded(child: StaggeredFadeIn(
                   index: 0,
                   child: _StatPill(
-                    valueWidget: AnimatedCountUp(target: totalMembers, style: sfText(fontSize: 20, fontWeight: FontWeight.w600, color: CupertinoAppColors.purpleLight)),
+                    valueWidget: AnimatedCountUp(target: totalMembers, style: ClayTokens.headlineMedium.copyWith(fontWeight: FontWeight.w600, color: ClayTokens.clayPrimaryLight)),
                     label: 'Members',
                     style: _StatStyle.purple,
                   ),
@@ -187,7 +186,7 @@ class _DashboardContent extends StatelessWidget {
                 Expanded(child: StaggeredFadeIn(
                   index: 1,
                   child: _StatPill(
-                    valueWidget: AnimatedCountUp(target: canChat, style: sfText(fontSize: 20, fontWeight: FontWeight.w600, color: CupertinoAppColors.green)),
+                    valueWidget: AnimatedCountUp(target: canChat, style: ClayTokens.headlineMedium.copyWith(fontWeight: FontWeight.w600, color: ClayTokens.clayAccent)),
                     label: 'Can Chat',
                     style: _StatStyle.green,
                   ),
@@ -199,11 +198,11 @@ class _DashboardContent extends StatelessWidget {
                     valueWidget: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        AnimatedCountUp(target: expiringSoon, style: sfText(fontSize: 20, fontWeight: FontWeight.w600, color: CupertinoAppColors.orange)),
+                        AnimatedCountUp(target: expiringSoon, style: ClayTokens.headlineMedium.copyWith(fontWeight: FontWeight.w600, color: ClayTokens.clayWarning)),
                         const SizedBox(width: 4),
                         Icon(
                           expiringSoon > 0 ? CupertinoIcons.arrow_up_right : CupertinoIcons.arrow_down,
-                          color: expiringSoon > 0 ? CupertinoAppColors.orange : CupertinoAppColors.green,
+                          color: expiringSoon > 0 ? ClayTokens.clayWarning : ClayTokens.clayAccent,
                           size: 14,
                         ),
                       ],
@@ -218,15 +217,15 @@ class _DashboardContent extends StatelessWidget {
           StaggeredFadeIn(
             index: 3,
             child: Text('Workouts This Week \u2014 All Members',
-              style: sfText(fontSize: 17, fontWeight: FontWeight.w500, color: CupertinoAppColors.textPrimary, letterSpacing: -0.41)),
+              style: ClayTokens.titleLarge.copyWith(fontSize: 17, fontWeight: FontWeight.w500, color: ClayTokens.clayDarkTextPrimary, letterSpacing: -0.41)),
           ),
         const SizedBox(height: 10),
         Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: CupertinoAppColors.groupedBackground,
+            color: ClayTokens.clayDarkSurface,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: CupertinoAppColors.separator.withAlpha(100)),
+            border: Border.all(color: ClayTokens.clayDarkBorder.withAlpha(100)),
           ),
           child: Column(
             children: [
@@ -249,10 +248,10 @@ class _DashboardContent extends StatelessWidget {
                         decoration: BoxDecoration(
                           borderRadius: const BorderRadius.vertical(top: Radius.circular(4)),
                           color: isFuture
-                              ? CupertinoAppColors.textQuaternary.withAlpha(30)
+                              ? ClayTokens.clayDarkTextTertiary.withAlpha(30)
                               : isToday
-                                  ? CupertinoAppColors.neon
-                                  : CupertinoAppColors.purple,
+                                  ? const Color(0xFF00F5B0)
+                                  : ClayTokens.clayPrimary,
                         ),
                       ),
                     );
@@ -265,10 +264,10 @@ class _DashboardContent extends StatelessWidget {
                   return Expanded(
                     child: Text(labels[i],
                       textAlign: TextAlign.center,
-                      style: sfText(
+                      style: ClayTokens.labelMedium.copyWith(
                         fontSize: 11,
                         fontWeight: FontWeight.w500,
-                        color: i == today ? CupertinoAppColors.neon : CupertinoAppColors.textTertiary,
+                        color: i == today ? const Color(0xFF00F5B0) : ClayTokens.clayDarkTextTertiary,
                         letterSpacing: 0.06,
                       ),
                     ),
@@ -299,14 +298,14 @@ class _StatPill extends StatelessWidget {
     Color border;
     switch (style) {
       case _StatStyle.purple:
-        bg = CupertinoAppColors.purple.withAlpha(15);
-        border = CupertinoAppColors.purple.withAlpha(40);
+        bg = ClayTokens.clayPrimary.withAlpha(15);
+        border = ClayTokens.clayPrimary.withAlpha(40);
       case _StatStyle.green:
-        bg = CupertinoAppColors.green.withAlpha(15);
-        border = CupertinoAppColors.green.withAlpha(40);
+        bg = ClayTokens.clayAccent.withAlpha(15);
+        border = ClayTokens.clayAccent.withAlpha(40);
       case _StatStyle.amber:
-        bg = CupertinoAppColors.orange.withAlpha(15);
-        border = CupertinoAppColors.orange.withAlpha(40);
+        bg = ClayTokens.clayWarning.withAlpha(15);
+        border = ClayTokens.clayWarning.withAlpha(40);
     }
     return Container(
       padding: const EdgeInsets.all(10),
@@ -319,7 +318,7 @@ class _StatPill extends StatelessWidget {
         children: [
           valueWidget,
           const SizedBox(height: 2),
-          Text(label, style: sfText(fontSize: 11, fontWeight: FontWeight.w500, color: CupertinoAppColors.textTertiary, letterSpacing: 0.06)),
+          Text(label, style: ClayTokens.labelMedium.copyWith(fontSize: 11, fontWeight: FontWeight.w500, color: ClayTokens.clayDarkTextTertiary, letterSpacing: 0.06)),
         ],
       ),
     );

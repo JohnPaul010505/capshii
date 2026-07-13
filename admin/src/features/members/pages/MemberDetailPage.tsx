@@ -2,7 +2,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { useMember } from '../hooks/useMembers'
-import { ArrowLeft, Dumbbell, Scale, Phone, Calendar, MapPin } from 'lucide-react'
+import { ArrowLeft, Dumbbell, Scale, Phone, Calendar, MapPin, PhoneCall } from 'lucide-react'
 import StatsCard from '@/components/StatsCard'
 import {
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line,
@@ -53,7 +53,8 @@ export default function MemberDetailPage() {
   if (isLoading) return <div className="text-center py-8 text-[#55557A]">Loading...</div>
   if (!member) return <div className="text-center py-8 text-[#55557A]">Member not found</div>
 
-  const fullAddress = address ? [address.line1, address.line2, address.city, address.state, address.postal_code, address.country].filter(Boolean).join(', ') : null
+  const structuredAddress = address ? [address.line1, address.line2, address.city, address.state, address.postal_code, address.country].filter(Boolean).join(', ') : null
+  const fullAddress = structuredAddress || member.address || null
 
   return (
     <div className="space-y-6">
@@ -129,6 +130,25 @@ export default function MemberDetailPage() {
             <div>
               <p className="text-xs text-[#55557A]">Address</p>
               <p className="text-sm text-[#ECECFC]">{fullAddress || '—'}</p>
+            </div>
+          </div>
+        </div>
+        <div className="border-t border-[#2A2A45] mt-4 pt-4">
+          <h3 className="text-sm font-semibold text-[#ECECFC] mb-3">Emergency Contact</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="flex items-center gap-3">
+              <PhoneCall className="w-4 h-4 text-[#55557A]" />
+              <div>
+                <p className="text-xs text-[#55557A]">Contact Name</p>
+                <p className="text-sm text-[#ECECFC]">{member.emergency_contact_name || '—'}</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <Phone className="w-4 h-4 text-[#55557A]" />
+              <div>
+                <p className="text-xs text-[#55557A]">Contact Phone</p>
+                <p className="text-sm text-[#ECECFC]">{member.emergency_contact_phone || '—'}</p>
+              </div>
             </div>
           </div>
         </div>

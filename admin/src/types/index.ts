@@ -11,7 +11,10 @@ export interface Profile {
   avatar_url: string | null
   date_of_birth: string | null
   gender: string | null
+  address: string | null
   fitness_goal: string | null
+  emergency_contact_name: string | null
+  emergency_contact_phone: string | null
   created_at: string
   updated_at: string
 }
@@ -137,6 +140,9 @@ export interface Enrollment {
   phone: string | null
   date_of_birth: string | null
   gender: string | null
+  address: string | null
+  emergency_contact_name: string | null
+  emergency_contact_phone: string | null
   status: string
   confirmed_at: string | null
   confirmed_by: string | null

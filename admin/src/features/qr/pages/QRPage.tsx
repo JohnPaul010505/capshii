@@ -57,9 +57,17 @@ export default function QRPage() {
     queryClient.invalidateQueries({ queryKey: ['enrollments'] })
   }
 
+  function phoneError(v: string) {
+    if (!v) return null
+    const digits = v.replace(/\D/g, '')
+    return digits.length !== 11 ? 'Phone number must be exactly 11 digits' : null
+  }
+
   const handleManualSave = async () => {
     if (!formData.fullName || !formData.email || !password) return
     if (password !== confirmPassword) { alert('Passwords do not match'); return }
+    if (phoneError(formData.phone)) { alert(phoneError(formData.phone)); return }
+    if (formData.emergencyContactPhone && phoneError(formData.emergencyContactPhone)) { alert(phoneError(formData.emergencyContactPhone)); return }
     setSaving(true)
     try {
       const res = await fetch('/api/users', {
@@ -69,6 +77,8 @@ export default function QRPage() {
           email: formData.email, password, fullName: formData.fullName, role: 'member',
           phone: formData.phone || undefined, dateOfBirth: formData.dateOfBirth || undefined,
           gender: formData.gender || undefined, address: formData.address || undefined,
+          emergencyContactName: formData.emergencyContactName || undefined,
+          emergencyContactPhone: formData.emergencyContactPhone || undefined,
         }),
       })
       if (!res.ok) throw new Error('Failed to create user')
@@ -97,6 +107,8 @@ export default function QRPage() {
       fullName: enrollment.full_name ?? '', email: enrollment.email ?? '',
       phone: enrollment.phone ?? '', dateOfBirth: enrollment.date_of_birth ?? '',
       gender: enrollment.gender ?? '', address: enrollment.address ?? '',
+      emergencyContactName: enrollment.emergency_contact_name ?? '',
+      emergencyContactPhone: enrollment.emergency_contact_phone ?? '',
     })
     setShowModal(true)
   }
@@ -105,6 +117,7 @@ export default function QRPage() {
 
   const handleEnrollSubmit = async () => {
     if (!enrollFormData.fullName || !enrollFormData.email) { setEnrollError('Name and email are required'); return }
+    if (phoneError(enrollFormData.phone)) { setEnrollError(phoneError(enrollFormData.phone)); return }
     setEnrollSaving(true); setEnrollError('')
     try {
       const res = await fetch('/api/enroll', {

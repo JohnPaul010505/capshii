@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared/models/profile.dart';
 import 'package:shared/services/supabase_client.dart';
-import 'package:google_fonts/google_fonts.dart';
+import '../../../../app/design_tokens.dart';
 
 final assignedMembersProvider = FutureProvider<List<Profile>>((ref) async {
   final client = SupabaseClientService().client;
@@ -27,27 +26,28 @@ class MembersListPage extends ConsumerWidget {
     final membersAsync = ref.watch(assignedMembersProvider);
 
     return Scaffold(
+      backgroundColor: ClayTokens.clayDarkBase,
       body: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Padding(
+            Padding(
               padding: EdgeInsets.fromLTRB(16, 12, 16, 0),
               child: Text('My Members',
-                style: sfText(fontSize: 20, fontWeight: FontWeight.w600, color: CupertinoAppColors.textPrimary, letterSpacing: 0.38)),
+                style: ClayTokens.headlineSmall.copyWith(color: ClayTokens.clayDarkTextPrimary)),
             ),
             const SizedBox(height: 8),
             Expanded(
               child: membersAsync.when(
                 data: (members) {
                   if (members.isEmpty) {
-                    return const Center(
+                    return Center(
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(CupertinoIcons.person_2, color: CupertinoAppColors.textTertiary, size: 48),
-                          SizedBox(height: 12),
-                          Text('No assigned members yet', style: sfText(fontSize: 13, fontWeight: FontWeight.w400, color: CupertinoAppColors.textQuaternary, letterSpacing: -0.08)),
+                          Icon(Icons.group_outlined, color: ClayTokens.clayDarkTextTertiary, size: 48),
+                          const SizedBox(height: 12),
+                          Text('No assigned members yet', style: ClayTokens.bodySmall.copyWith(color: ClayTokens.clayDarkTextTertiary)),
                         ],
                       ),
                     );
@@ -57,7 +57,7 @@ class MembersListPage extends ConsumerWidget {
                     itemCount: members.length,
                     separatorBuilder: (_, __) => Container(
                       height: 0.5,
-                      color: CupertinoAppColors.separator.withAlpha(100),
+                      color: ClayTokens.clayDarkDivider,
                       margin: const EdgeInsets.only(left: 60),
                     ),
                     itemBuilder: (_, i) {
@@ -70,24 +70,24 @@ class MembersListPage extends ConsumerWidget {
                             children: [
                               Container(
                                 width: 36, height: 36,
-                                decoration: const BoxDecoration(
+                                decoration: BoxDecoration(
                                   shape: BoxShape.circle,
-                                  color: CupertinoAppColors.cardElevated,
+                                  color: ClayTokens.clayDarkSurface,
                                 ),
                                 alignment: Alignment.center,
-                                child: Text(member.fullName[0], style: sfText(fontSize: 15, fontWeight: FontWeight.w600, color: CupertinoAppColors.textPrimary)),
+                                child: Text(member.fullName[0], style: ClayTokens.titleMedium.copyWith(color: ClayTokens.clayDarkTextPrimary)),
                               ),
                               const SizedBox(width: 10),
                               Expanded(
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text(member.fullName, style: sfText(fontSize: 15, fontWeight: FontWeight.w500, color: CupertinoAppColors.textPrimary, letterSpacing: -0.24)),
-                                    Text(member.email, style: sfText(fontSize: 13, fontWeight: FontWeight.w400, color: CupertinoAppColors.textTertiary, letterSpacing: -0.08)),
+                                    Text(member.fullName, style: ClayTokens.bodyLarge.copyWith(color: ClayTokens.clayDarkTextPrimary)),
+                                    Text(member.email, style: ClayTokens.bodySmall.copyWith(color: ClayTokens.clayDarkTextTertiary)),
                                   ],
                                 ),
                               ),
-                              const Icon(CupertinoIcons.chevron_forward, color: CupertinoAppColors.textTertiary, size: 18),
+                              Icon(Icons.chevron_right, color: ClayTokens.clayDarkTextTertiary, size: 18),
                             ],
                           ),
                         ),
@@ -95,8 +95,8 @@ class MembersListPage extends ConsumerWidget {
                     },
                   );
                 },
-                loading: () => const Center(child: CupertinoActivityIndicator(radius: 14, color: CupertinoAppColors.primaryBlue)),
-                error: (e, _) => Center(child: Text('Error: $e', style: sfText(fontSize: 12, fontWeight: FontWeight.w400, color: CupertinoAppColors.textQuaternary))),
+                loading: () => const Center(child: CircularProgressIndicator()),
+                error: (e, _) => Center(child: Text('Error: $e', style: ClayTokens.bodySmall.copyWith(color: ClayTokens.clayError))),
               ),
             ),
           ],
