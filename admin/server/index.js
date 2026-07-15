@@ -23,7 +23,7 @@ const adminClient = createClient(supabaseUrl, serviceRoleKey, {
 })
 
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', routes: ['enroll', 'users', 'delete-user', 'backfill-auth', 'backfill-codes', 'ai/predictions'] })
+  res.json({ status: 'ok', routes: ['enroll', 'users', 'delete-user', 'assign-trainer', 'unassign-trainer', 'backfill-auth', 'backfill-codes', 'ai/predictions'] })
 })
 
 app.post('/api/enroll', async (req, res) => {
@@ -151,6 +151,51 @@ app.post('/api/delete-user', async (req, res) => {
     console.error('Delete user error:', err)
     const message = err?.message || JSON.stringify(err)
     res.status(500).json({ error: message })
+  }
+})
+
+app.post('/api/assign-trainer', async (req, res) => {
+  const { trainer_id, member_id } = req.body
+
+  if (!trainer_id || !member_id) {
+    return res.status(400).json({ error: 'trainer_id and member_id are required' })
+  }
+
+  try {
+    const { data, error } = await adminClient
+      .from('trainer_assignments')
+      .insert({ trainer_id, member_id, status: 'active' })
+      .select()
+      .single()
+
+    if (error) throw error
+    res.json({ success: true, assignment: data })
+  } catch (err) {
+    console.error('Assign trainer error:', err)
+    res.status(500).json({ error: err?.message || 'Failed to assign trainer' })
+  }
+})
+
+app.post('/api/unassign-trainer', async (req, res) => {
+  const { assignment_id } = req.body
+
+  if (!assignment_id) {
+    return res.status(400).json({ error: 'assignment_id is required' })
+  }
+
+  try {
+    const { data, error } = await adminClient
+      .from('trainer_assignments')
+      .update({ status: 'ended' })
+      .eq('id', assignment_id)
+      .select()
+      .single()
+
+    if (error) throw error
+    res.json({ success: true, assignment: data })
+  } catch (err) {
+    console.error('Unassign trainer error:', err)
+    res.status(500).json({ error: err?.message || 'Failed to unassign trainer' })
   }
 })
 

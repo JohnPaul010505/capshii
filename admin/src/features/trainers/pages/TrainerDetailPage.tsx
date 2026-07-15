@@ -1,11 +1,15 @@
+import { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
-import { ArrowLeft, Mail, Phone, Users } from 'lucide-react'
+import { ArrowLeft, Mail, Phone, Users, UserPlus, X, Search, Trash2 } from 'lucide-react'
 
 export default function TrainerDetailPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
+  const [showAssignModal, setShowAssignModal] = useState(false)
+  const [memberSearch, setMemberSearch] = useState('')
 
   const { data: trainer } = useQuery({
     queryKey: ['trainer', id],
@@ -42,6 +46,53 @@ export default function TrainerDetailPage() {
         .order('created_at', { ascending: false })
         .limit(10)
       return data ?? []
+    },
+  })
+
+  const { data: unassignedMembers } = useQuery({
+    queryKey: ['unassigned-members', id],
+    queryFn: async () => {
+      const assignedIds = assignedMembers?.map(a => a.member_id) ?? []
+      const { data } = await supabase
+        .from('profiles')
+        .select('id, full_name, email, code')
+        .eq('role', 'member')
+        .order('full_name')
+      return (data ?? []).filter(m => !assignedIds.includes(m.id))
+    },
+    enabled: showAssignModal,
+  })
+
+  const assignMutation = useMutation({
+    mutationFn: async (memberId: string) => {
+      const res = await fetch('/api/assign-trainer', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ trainer_id: id, member_id: memberId }),
+      })
+      if (!res.ok) throw new Error('Failed to assign')
+      return res.json()
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['trainer-members', id] })
+      queryClient.invalidateQueries({ queryKey: ['unassigned-members', id] })
+      setShowAssignModal(false)
+    },
+  })
+
+  const unassignMutation = useMutation({
+    mutationFn: async (assignmentId: string) => {
+      const res = await fetch('/api/unassign-trainer', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ assignment_id: assignmentId }),
+      })
+      if (!res.ok) throw new Error('Failed to unassign')
+      return res.json()
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['trainer-members', id] })
+      queryClient.invalidateQueries({ queryKey: ['unassigned-members', id] })
     },
   })
 
@@ -93,8 +144,14 @@ export default function TrainerDetailPage() {
       </div>
 
       <div className="bg-[#14142A] rounded-xl border border-[#2A2A45] shadow-sm overflow-hidden">
-        <div className="px-4 py-3 border-b border-[#2A2A45]">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-[#2A2A45]">
           <h2 className="font-semibold text-[#ECECFC]">Assigned Members</h2>
+          <button
+            onClick={() => setShowAssignModal(true)}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white bg-[#7C3AED] hover:bg-[#6D28D9] rounded-lg transition-colors"
+          >
+            <UserPlus className="w-3.5 h-3.5" /> Assign Member
+          </button>
         </div>
         {assignedMembers?.length === 0 ? (
           <div className="text-center py-8 text-[#55557A]">No members assigned</div>
@@ -105,6 +162,7 @@ export default function TrainerDetailPage() {
                 <th className="text-left px-4 py-3 text-sm font-medium text-[#55557A]">Name</th>
                 <th className="text-left px-4 py-3 text-sm font-medium text-[#55557A]">Email</th>
                 <th className="text-left px-4 py-3 text-sm font-medium text-[#55557A]">Phone</th>
+                <th className="text-right px-4 py-3 text-sm font-medium text-[#55557A]">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -113,6 +171,16 @@ export default function TrainerDetailPage() {
                   <td className="px-4 py-3 text-sm font-medium text-[#ECECFC]">{a.profiles?.full_name}</td>
                   <td className="px-4 py-3 text-sm text-[#B4B4D0]">{a.profiles?.email}</td>
                   <td className="px-4 py-3 text-sm text-[#B4B4D0]">{a.profiles?.phone || '—'}</td>
+                  <td className="px-4 py-3 text-right">
+                    <button
+                      onClick={() => unassignMutation.mutate(a.id)}
+                      disabled={unassignMutation.isPending}
+                      className="text-[#EF4444] hover:text-[#DC2626] disabled:opacity-50 transition-colors"
+                      title="Remove assignment"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -147,6 +215,62 @@ export default function TrainerDetailPage() {
           </table>
         )}
       </div>
+
+      {showAssignModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
+          <div className="bg-[#14142A] rounded-xl border border-[#2A2A45] shadow-xl w-full max-w-lg mx-4 max-h-[80vh] flex flex-col">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-[#2A2A45]">
+              <h3 className="font-semibold text-[#ECECFC]">Assign Member</h3>
+              <button onClick={() => setShowAssignModal(false)} className="text-[#55557A] hover:text-[#ECECFC] transition-colors">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="px-4 py-3 border-b border-[#2A2A45]">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#55557A]" />
+                <input
+                  type="text"
+                  placeholder="Search members..."
+                  value={memberSearch}
+                  onChange={e => setMemberSearch(e.target.value)}
+                  className="w-full pl-9 pr-3 py-2 text-sm bg-[#0D0D1A] border border-[#2A2A45] rounded-lg text-[#ECECFC] placeholder-[#55557A] focus:outline-none focus:border-[#7C3AED]"
+                />
+              </div>
+            </div>
+            <div className="flex-1 overflow-y-auto p-2">
+              {unassignedMembers
+                ?.filter(m =>
+                  memberSearch === '' ||
+                  m.full_name?.toLowerCase().includes(memberSearch.toLowerCase()) ||
+                  m.email?.toLowerCase().includes(memberSearch.toLowerCase()) ||
+                  m.code?.toLowerCase().includes(memberSearch.toLowerCase())
+                )
+                .map(m => (
+                  <button
+                    key={m.id}
+                    onClick={() => assignMutation.mutate(m.id)}
+                    disabled={assignMutation.isPending}
+                    className="w-full flex items-center justify-between px-3 py-2.5 rounded-lg hover:bg-[#7C3AED]/10 transition-colors disabled:opacity-50 text-left"
+                  >
+                    <div>
+                      <div className="text-sm font-medium text-[#ECECFC]">{m.full_name}</div>
+                      <div className="text-xs text-[#55557A]">{m.email} {m.code ? `· ${m.code}` : ''}</div>
+                    </div>
+                    <UserPlus className="w-4 h-4 text-[#7C3AED]" />
+                  </button>
+                ))}
+              {unassignedMembers?.filter(m =>
+                memberSearch === '' ||
+                m.full_name?.toLowerCase().includes(memberSearch.toLowerCase()) ||
+                m.email?.toLowerCase().includes(memberSearch.toLowerCase()) ||
+                m.code?.toLowerCase().includes(memberSearch.toLowerCase())
+              ).length === 0 && (
+                <div className="text-center py-8 text-[#55557A] text-sm">No members found</div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
