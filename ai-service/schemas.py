@@ -1,6 +1,5 @@
 from pydantic import BaseModel
-from typing import Optional, Any
-from datetime import date
+from typing import Optional
 
 class MemberIdentifier(BaseModel):
     member_id: str

@@ -20,9 +20,9 @@ class LoginPage extends ConsumerStatefulWidget {
 
 class _LoginPageState extends ConsumerState<LoginPage>
     with TickerProviderStateMixin {
-  final _emailController = TextEditingController();
+  final _codeController = TextEditingController();
   final _passwordController = TextEditingController();
-  final _emailFocus = FocusNode();
+  final _codeFocus = FocusNode();
   final _passwordFocus = FocusNode();
   String _selectedRole = 'member';
   String? _error;
@@ -57,12 +57,12 @@ class _LoginPageState extends ConsumerState<LoginPage>
       curve: Curves.easeOutCubic,
     );
 
-    _emailFocus.addListener(_handleFocusChange);
+    _codeFocus.addListener(_handleFocusChange);
     _passwordFocus.addListener(_handleFocusChange);
   }
 
   void _handleFocusChange() {
-    final isTyping = _emailFocus.hasFocus || _passwordFocus.hasFocus;
+    final isTyping = _codeFocus.hasFocus || _passwordFocus.hasFocus;
     if (isTyping) {
       _bgController.forward();
     } else {
@@ -72,9 +72,9 @@ class _LoginPageState extends ConsumerState<LoginPage>
 
   @override
   void dispose() {
-    _emailController.dispose();
+    _codeController.dispose();
     _passwordController.dispose();
-    _emailFocus.dispose();
+    _codeFocus.dispose();
     _passwordFocus.dispose();
     _fadeController.dispose();
     _bgController.dispose();
@@ -82,11 +82,11 @@ class _LoginPageState extends ConsumerState<LoginPage>
   }
 
   Future<void> _login() async {
-    final email = _emailController.text.trim();
+    final code = _codeController.text.trim();
     final password = _passwordController.text;
 
-    if (email.isEmpty) {
-      setState(() => _error = 'Please enter your email');
+    if (code.isEmpty) {
+      setState(() => _error = 'Please enter your ${_selectedRole == 'member' ? 'member' : 'trainer'} code');
       _fadeController.forward(from: 0);
       return;
     }
@@ -103,13 +103,13 @@ class _LoginPageState extends ConsumerState<LoginPage>
 
     try {
       final authService = AuthService();
-      final profile = await authService.signIn(
-        email: email,
+      final profile = await authService.signInWithCode(
+        code: code,
         password: password,
       );
 
       if (profile == null) {
-        setState(() => _error = 'Invalid email or password');
+        setState(() => _error = 'Invalid code or password');
         _fadeController.forward(from: 0);
         return;
       }
@@ -364,48 +364,12 @@ class _LoginPageState extends ConsumerState<LoginPage>
                                   StaggeredFadeIn(
                                     index: 4,
                                     child: Semantics(
-                                      label: 'Email address input',
-                                      child: AnimatedBuilder(
-                                        animation: _emailFocus,
-                                        builder: (context, child) =>
-                                            AnimatedContainer(
-                                          duration:
-                                              const Duration(milliseconds: 180),
-                                          decoration: BoxDecoration(
-                                            color: CupertinoAppColors.cardElevated,
-                                            borderRadius:
-                                                BorderRadius.circular(14),
-                                            border: Border.all(
-                                              color: _emailFocus.hasFocus
-                                                  ? CupertinoAppColors.primaryBlue
-                                                      .withOpacity(0.6)
-                                                  : CupertinoAppColors.separator
-                                                      .withOpacity(0.4),
-                                              width: _emailFocus.hasFocus ? 1.4 : 1,
-                                            ),
-                                          ),
-                                          child: child,
-                                        ),
-                                        child: CupertinoTextField(
-                                          controller: _emailController,
-                                          focusNode: _emailFocus,
-                                          placeholder: 'Email',
-                                          placeholderStyle: _clean(sfText(
-                                            fontSize: 15,
-                                            color: CupertinoAppColors.textTertiary,
-                                          )),
-                                          keyboardType: TextInputType.emailAddress,
-                                          textInputAction: TextInputAction.next,
-                                          style: _clean(sfText(
-                                            fontSize: 15,
-                                            color: CupertinoAppColors.textPrimary,
-                                          )),
-                                          padding: const EdgeInsets.symmetric(
-                                            horizontal: 16,
-                                            vertical: 14,
-                                          ),
-                                          decoration: const BoxDecoration(),
-                                        ),
+                                      label: 'Member code input',
+                                      child: _FloatingLabelInput(
+                                        controller: _codeController,
+                                        focusNode: _codeFocus,
+                                        label: _selectedRole == 'member' ? 'Member Code' : 'Trainer Code',
+                                        textInputAction: TextInputAction.next,
                                       ),
                                     ),
                                   ),
@@ -414,66 +378,30 @@ class _LoginPageState extends ConsumerState<LoginPage>
                                     index: 5,
                                     child: Semantics(
                                       label: 'Password input',
-                                      child: AnimatedBuilder(
-                                        animation: _passwordFocus,
-                                        builder: (context, child) =>
-                                            AnimatedContainer(
-                                          duration:
-                                              const Duration(milliseconds: 180),
-                                          decoration: BoxDecoration(
-                                            color: CupertinoAppColors.cardElevated,
-                                            borderRadius:
-                                                BorderRadius.circular(14),
-                                            border: Border.all(
-                                              color: _passwordFocus.hasFocus
-                                                  ? CupertinoAppColors.primaryBlue
-                                                      .withOpacity(0.6)
-                                                  : CupertinoAppColors.separator
-                                                      .withOpacity(0.4),
-                                              width:
-                                                  _passwordFocus.hasFocus ? 1.4 : 1,
+                                      child: _FloatingLabelInput(
+                                        controller: _passwordController,
+                                        focusNode: _passwordFocus,
+                                        label: 'Password',
+                                        obscureText: _obscurePassword,
+                                        textInputAction: TextInputAction.done,
+                                        onSubmitted: (_) => _login(),
+                                        suffix: Padding(
+                                          padding: const EdgeInsets.only(right: 2),
+                                          child: GestureDetector(
+                                            behavior: HitTestBehavior.opaque,
+                                            onTap: () => setState(
+                                              () => _obscurePassword =
+                                                  !_obscurePassword,
                                             ),
-                                          ),
-                                          child: child,
-                                        ),
-                                        child: CupertinoTextField(
-                                          controller: _passwordController,
-                                          focusNode: _passwordFocus,
-                                          placeholder: 'Password',
-                                          placeholderStyle: _clean(sfText(
-                                            fontSize: 15,
-                                            color: CupertinoAppColors.textTertiary,
-                                          )),
-                                          obscureText: _obscurePassword,
-                                          textInputAction: TextInputAction.done,
-                                          onSubmitted: (_) => _login(),
-                                          style: _clean(sfText(
-                                            fontSize: 15,
-                                            color: CupertinoAppColors.textPrimary,
-                                          )),
-                                          padding: const EdgeInsets.symmetric(
-                                            horizontal: 16,
-                                            vertical: 14,
-                                          ),
-                                          decoration: const BoxDecoration(),
-                                          suffix: Padding(
-                                            padding: const EdgeInsets.only(right: 2),
-                                            child: GestureDetector(
-                                              behavior: HitTestBehavior.opaque,
-                                              onTap: () => setState(
-                                                () => _obscurePassword =
-                                                    !_obscurePassword,
-                                              ),
-                                              child: Padding(
-                                                padding: const EdgeInsets.all(8),
-                                                child: Icon(
-                                                  _obscurePassword
-                                                      ? CupertinoIcons.eye_slash
-                                                      : CupertinoIcons.eye,
-                                                  color: CupertinoAppColors
-                                                      .textTertiary,
-                                                  size: 18,
-                                                ),
+                                            child: Padding(
+                                              padding: const EdgeInsets.all(8),
+                                              child: Icon(
+                                                _obscurePassword
+                                                    ? CupertinoIcons.eye_slash
+                                                    : CupertinoIcons.eye,
+                                                color: CupertinoAppColors
+                                                    .textTertiary,
+                                                size: 18,
                                               ),
                                             ),
                                           ),
@@ -642,6 +570,125 @@ class _LoginPageState extends ConsumerState<LoginPage>
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// Floating label input field with animated label and border.
+class _FloatingLabelInput extends StatefulWidget {
+  final TextEditingController controller;
+  final FocusNode focusNode;
+  final String label;
+  final bool obscureText;
+  final TextInputAction textInputAction;
+  final void Function(String)? onSubmitted;
+  final Widget? suffix;
+
+  const _FloatingLabelInput({
+    required this.controller,
+    required this.focusNode,
+    required this.label,
+    this.obscureText = false,
+    this.textInputAction = TextInputAction.next,
+    this.onSubmitted,
+    this.suffix,
+  });
+
+  @override
+  State<_FloatingLabelInput> createState() => _FloatingLabelInputState();
+}
+
+class _FloatingLabelInputState extends State<_FloatingLabelInput> {
+  bool _hasContent = false;
+
+  @override
+  void initState() {
+    super.initState();
+    widget.controller.addListener(_onChanged);
+    widget.focusNode.addListener(_onFocusChanged);
+    _hasContent = widget.controller.text.isNotEmpty;
+  }
+
+  @override
+  void dispose() {
+    widget.controller.removeListener(_onChanged);
+    widget.focusNode.removeListener(_onFocusChanged);
+    super.dispose();
+  }
+
+  void _onChanged() {
+    final hasContent = widget.controller.text.isNotEmpty;
+    if (hasContent != _hasContent) {
+      setState(() => _hasContent = hasContent);
+    }
+  }
+
+  void _onFocusChanged() {
+    setState(() {});
+  }
+
+  bool get _isFloating => widget.focusNode.hasFocus || _hasContent;
+
+  @override
+  Widget build(BuildContext context) {
+    final floating = _isFloating;
+    final focused = widget.focusNode.hasFocus;
+
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
+      curve: Curves.easeInOut,
+      decoration: BoxDecoration(
+        color: CupertinoAppColors.cardElevated,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: focused
+              ? CupertinoAppColors.primaryBlue.withOpacity(0.6)
+              : CupertinoAppColors.separator.withOpacity(0.4),
+          width: focused ? 1.4 : 1,
+        ),
+      ),
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          CupertinoTextField(
+            controller: widget.controller,
+            focusNode: widget.focusNode,
+            obscureText: widget.obscureText,
+            textInputAction: widget.textInputAction,
+            onSubmitted: widget.onSubmitted,
+            style: _clean(sfText(
+              fontSize: 15,
+              color: CupertinoAppColors.textPrimary,
+            )),
+            padding: const EdgeInsets.fromLTRB(16, 22, 16, 14),
+            decoration: const BoxDecoration(),
+            suffix: widget.suffix,
+          ),
+          AnimatedPositioned(
+            duration: const Duration(milliseconds: 200),
+            curve: Curves.easeInOut,
+            left: 16,
+            top: floating ? -9 : 14,
+            child: Container(
+              color: CupertinoAppColors.cardElevated,
+              padding: floating
+                  ? const EdgeInsets.symmetric(horizontal: 4)
+                  : EdgeInsets.zero,
+              child: AnimatedDefaultTextStyle(
+                duration: const Duration(milliseconds: 200),
+                curve: Curves.easeInOut,
+                style: _clean(sfText(
+                  fontSize: floating ? 11 : 15,
+                color: focused
+                    ? Colors.white
+                    : CupertinoAppColors.textTertiary,
+                )),
+                child: Text(widget.label),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

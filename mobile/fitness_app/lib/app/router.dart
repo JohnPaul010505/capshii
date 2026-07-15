@@ -20,8 +20,7 @@ import '../features/trainer/chat/pages/chat_list_page.dart';
 import '../features/trainer/chat/pages/chat_room_page.dart';
 import '../features/trainer/profile/pages/profile_page.dart' as trainer_profile;
 import '../features/shared/checkin/checkin_page.dart';
-import '../features/shared/widgets/glass_bottom_nav.dart';
-import '../features/shared/widgets/nav_icons.dart';
+import 'package:circle_nav_bar/circle_nav_bar.dart';
 
 final _memberShellKey = GlobalKey<NavigatorState>();
 final _trainerShellKey = GlobalKey<NavigatorState>();
@@ -111,29 +110,30 @@ final routerProvider = Provider<GoRouter>((ref) {
   );
 });
 
-class MemberShell extends StatelessWidget {
+class MemberShell extends StatefulWidget {
   final Widget child;
   const MemberShell({super.key, required this.child});
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: child,
-      bottomNavigationBar: GlassBottomNav(
-        currentIndex: _memberIndex(context),
-        onTap: (index) => _memberTap(context, index),
-        items: const [
-          GlassNavItem(type: NavIconType.home, label: 'Home'),
-          GlassNavItem(type: NavIconType.workout, label: 'Workout'),
-          GlassNavItem(type: NavIconType.food, label: 'Food'),
-          GlassNavItem(type: NavIconType.progress, label: 'Progress'),
-          GlassNavItem(type: NavIconType.chat, label: 'Chat'),
-        ],
-      ),
-    );
+  State<MemberShell> createState() => _MemberShellState();
+}
+
+class _MemberShellState extends State<MemberShell> {
+  int _currentIndex = 0;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _currentIndex = _memberIndex();
   }
 
-  int _memberIndex(BuildContext context) {
+  @override
+  void didUpdateWidget(covariant MemberShell oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    _currentIndex = _memberIndex();
+  }
+
+  int _memberIndex() {
     final location = GoRouterState.of(context).matchedLocation;
     if (location == '/member/workout') return 1;
     if (location == '/member/meals') return 2;
@@ -142,7 +142,8 @@ class MemberShell extends StatelessWidget {
     return 0;
   }
 
-  void _memberTap(BuildContext context, int index) {
+  void _onTap(int index) {
+    setState(() => _currentIndex = index);
     switch (index) {
       case 0: context.go('/member/home');
       case 1: context.go('/member/workout');
@@ -151,30 +152,75 @@ class MemberShell extends StatelessWidget {
       case 4: context.go('/member/chat');
     }
   }
-}
-
-class TrainerShell extends StatelessWidget {
-  final Widget child;
-  const TrainerShell({super.key, required this.child});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: child,
-      bottomNavigationBar: GlassBottomNav(
-        currentIndex: _trainerIndex(context),
-        onTap: (index) => _trainerTap(context, index),
-        items: const [
-          GlassNavItem(type: NavIconType.dashboard, label: 'Dashboard'),
-          GlassNavItem(type: NavIconType.members, label: 'Members'),
-          GlassNavItem(type: NavIconType.messages, label: 'Messages'),
-          GlassNavItem(type: NavIconType.profile, label: 'Profile'),
+      body: widget.child,
+      bottomNavigationBar: CircleNavBar(
+        activeIcons: const [
+          Icon(Icons.home, color: Colors.white),
+          Icon(Icons.fitness_center, color: Colors.white),
+          Icon(Icons.restaurant, color: Colors.white),
+          Icon(Icons.trending_up, color: Colors.white),
+          Icon(Icons.chat_bubble, color: Colors.white),
         ],
+        inactiveIcons: const [
+          Icon(Icons.home, color: Colors.white38),
+          Icon(Icons.fitness_center, color: Colors.white38),
+          Icon(Icons.restaurant, color: Colors.white38),
+          Icon(Icons.trending_up, color: Colors.white38),
+          Icon(Icons.chat_bubble, color: Colors.white38),
+        ],
+        color: const Color(0xFF1C1C35),
+        circleColor: const Color(0xFF7C3AED),
+        height: 60,
+        circleWidth: 52,
+        activeIndex: _currentIndex,
+        onTap: _onTap,
+        tabCurve: Curves.easeOutCubic,
+        iconCurve: Curves.easeOutBack,
+        tabDurationMillSec: 500,
+        iconDurationMillSec: 450,
+        padding: const EdgeInsets.only(left: 12, right: 12, bottom: 16, top: 4),
+        cornerRadius: const BorderRadius.only(
+          topLeft: Radius.circular(16),
+          topRight: Radius.circular(16),
+          bottomRight: Radius.circular(16),
+          bottomLeft: Radius.circular(16),
+        ),
+        shadowColor: const Color(0xFF7C3AED).withValues(alpha: 0.3),
+        circleShadowColor: const Color(0xFF7C3AED).withValues(alpha: 0.4),
+        elevation: 8,
       ),
     );
   }
+}
 
-  int _trainerIndex(BuildContext context) {
+class TrainerShell extends StatefulWidget {
+  final Widget child;
+  const TrainerShell({super.key, required this.child});
+
+  @override
+  State<TrainerShell> createState() => _TrainerShellState();
+}
+
+class _TrainerShellState extends State<TrainerShell> {
+  int _currentIndex = 0;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _currentIndex = _trainerIndex();
+  }
+
+  @override
+  void didUpdateWidget(covariant TrainerShell oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    _currentIndex = _trainerIndex();
+  }
+
+  int _trainerIndex() {
     final location = GoRouterState.of(context).matchedLocation;
     if (location.startsWith('/trainer/members')) return 1;
     if (location.startsWith('/trainer/chat')) return 2;
@@ -182,12 +228,54 @@ class TrainerShell extends StatelessWidget {
     return 0;
   }
 
-  void _trainerTap(BuildContext context, int index) {
+  void _onTap(int index) {
+    setState(() => _currentIndex = index);
     switch (index) {
       case 0: context.go('/trainer/dashboard');
       case 1: context.go('/trainer/members');
       case 2: context.go('/trainer/chat');
       case 3: context.go('/trainer/profile');
     }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: widget.child,
+      bottomNavigationBar: CircleNavBar(
+        activeIcons: const [
+          Icon(Icons.dashboard, color: Colors.white),
+          Icon(Icons.people, color: Colors.white),
+          Icon(Icons.message, color: Colors.white),
+          Icon(Icons.person, color: Colors.white),
+        ],
+        inactiveIcons: const [
+          Icon(Icons.dashboard, color: Colors.white38),
+          Icon(Icons.people, color: Colors.white38),
+          Icon(Icons.message, color: Colors.white38),
+          Icon(Icons.person, color: Colors.white38),
+        ],
+        color: const Color(0xFF1C1C35),
+        circleColor: const Color(0xFF7C3AED),
+        height: 60,
+        circleWidth: 56,
+        activeIndex: _currentIndex,
+        onTap: _onTap,
+        tabCurve: Curves.easeOutCubic,
+        iconCurve: Curves.easeOutBack,
+        tabDurationMillSec: 500,
+        iconDurationMillSec: 450,
+        padding: const EdgeInsets.only(left: 16, right: 16, bottom: 16, top: 4),
+        cornerRadius: const BorderRadius.only(
+          topLeft: Radius.circular(16),
+          topRight: Radius.circular(16),
+          bottomRight: Radius.circular(16),
+          bottomLeft: Radius.circular(16),
+        ),
+        shadowColor: const Color(0xFF7C3AED).withValues(alpha: 0.3),
+        circleShadowColor: const Color(0xFF7C3AED).withValues(alpha: 0.4),
+        elevation: 8,
+      ),
+    );
   }
 }
